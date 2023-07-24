@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,9 +37,13 @@ public class UserEntity {
     @Column(name = "user_admin")
     private int userAdmin;
 
+
     @CreatedDate
     @Column(name = "user_reg_date")
     private LocalDateTime userRegDate;
 
 
+
 }
+
+
