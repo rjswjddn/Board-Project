@@ -60,4 +60,13 @@ public class WebController {
         return "tables";
     }
 
+    @GetMapping("/list")
+    public String list(){
+        return "board_list";
+    }
+
+//    @GetMapping("/board_register")
+//    public String board_register(){
+//        return "board_register";
+//    }
 }
