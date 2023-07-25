@@ -1,8 +1,12 @@
 package com.example.boardproject.dto;
 
+import com.example.boardproject.entity.BoardEntity;
 import com.example.boardproject.entity.BoardType;
 import jakarta.persistence.Transient;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
