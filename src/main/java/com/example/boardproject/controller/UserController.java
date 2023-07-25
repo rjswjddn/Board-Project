@@ -29,7 +29,7 @@ public class UserController {
     @GetMapping("/register")
     public String registerPage(Model model, HttpServletRequest httpServletRequest) {
         if (httpServletRequest.getSession(false) != null) {
-            return "redirect:/index";
+            return "redirect:/board";
         }
         model.addAttribute("registerDto", new RegisterDto());
         return "register";
@@ -84,7 +84,7 @@ public class UserController {
     @GetMapping("/login")
     public String loginPage(Model model, HttpServletRequest httpServletRequest) {
         if (httpServletRequest.getSession(false) != null) {
-            return "redirect:/index";
+            return "redirect:/board";
         }
         model.addAttribute("loginDto", new LoginDto());
         return "/login";
@@ -109,7 +109,7 @@ public class UserController {
                 HttpSession session = httpServletRequest.getSession(true);
                 // 세션에 userId를 넣어줌
                 session.setAttribute("userId", userDto.getUserId());
-                return "redirect:/index";
+                return "redirect:/board";
 
             case ID_NULL:
                 message = "아이디를 입력해주세요.";
