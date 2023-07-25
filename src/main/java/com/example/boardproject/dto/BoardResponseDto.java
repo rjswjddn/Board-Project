@@ -59,10 +59,20 @@ public class BoardResponseDto {
 
 
 
-
-
-
-
+    public BoardResponseDto(BoardEntity boardEntity) {
+        this.boardSeq = boardEntity.getBoardSeq();
+        this.boardTitle = boardEntity.getBoardTitle();
+        this.boardContent = boardEntity.getBoardContent();
+        this.boardType = boardEntity.getBoardType();
+        this.commentCnt = boardEntity.getCommentCnt();
+        this.viewCnt = boardEntity.getViewCnt();
+        this.likeCnt = boardEntity.getLikeCnt();
+        this.imageYn = boardEntity.isImageYn();
+        this.boardStatus = boardEntity.isBoardStatus();
+        this.boardCreatedDate = boardEntity.getBoardCreatedDate();
+        this.boardUpdatedDate = boardEntity.getBoardUpdatedDate();
+        this.userSeq = boardEntity.getUserSeq();
+    }
 
 
 

@@ -67,4 +67,18 @@ public class BoardRequestDto {
                 .build();
 
     }
+
+    public BoardRequestDto(BoardResponseDto boardResponseDto) {
+        this.boardSeq = boardResponseDto.getBoardSeq();
+        this.boardTitle = boardResponseDto.getBoardTitle();
+        this.boardStatus = boardResponseDto.isBoardStatus();
+        this.boardType = boardResponseDto.getBoardType();
+        this.boardContent = boardResponseDto.getBoardContent();
+        this.commentCnt = boardResponseDto.getCommentCnt();
+        this.viewCnt = boardResponseDto.getViewCnt();
+        this.likeCnt = boardResponseDto.getLikeCnt();
+        this.imageYn = boardResponseDto.isImageYn();
+        this.boardCreatedDate = boardResponseDto.getBoardCreatedDate();
+        this.userSeq = boardResponseDto.getUserSeq();
+    }
 }

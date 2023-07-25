@@ -22,4 +22,5 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
 
 
+    UserEntity findByUserSeq(Long userSeq);
 }

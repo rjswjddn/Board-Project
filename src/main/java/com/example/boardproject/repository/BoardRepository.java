@@ -51,11 +51,10 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
     Page<BoardResponseDto> findByBoardTitleContainingIgnoreCaseOrderByBoardSeqDesc(@Param("titleKeyword") String titleKeyword, Pageable pageable);
 
 
+    BoardEntity findByBoardSeq(Long boardSeq);
 
-
-
-
-
+    @Query(value = "UPDATE board SET board_status = 0", nativeQuery = true)
+    void deleteByBoardSeq(Long boardSeq);
 
 }
 

@@ -18,9 +18,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.Map;
 
-@Slf4j
+
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
 
     private final UserService userService;
@@ -36,37 +37,26 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public String register(Model model, @Valid @ModelAttribute("registerDto") RegisterDto registerDto, Errors errors ){
+    public String register(Model model, @Valid @ModelAttribute("registerDto") RegisterDto registerDto, Errors errors) {
 
         String message = "";
         String url = "";
 
         log.info("registerDto = {}", registerDto);
-        if (errors.hasErrors()){
+        if (errors.hasErrors()) {
             Map<String, String> result = userService.registerHandler(errors);
-            for(String key:result.keySet()){
+            for (String key : result.keySet()) {
                 model.addAttribute(key, result.get(key));
             }
             return "register";
         }
 
-        switch(userService.checkRegister(registerDto)){
+        switch (userService.checkRegister(registerDto)) {
             case PASS:
                 userService.register(registerDto);
                 message = "회원가입에 성공했습니다.";
                 url = "/login";
                 break;
-
-            case ID_NULL:
-                message = "아이디를 입력해주세요.";
-                url = "/register";
-                break;
-
-            case PWD_NULL:
-                message = "비밀번호를 입력해주세요.";
-                url = "/register";
-                break;
-
 
             case ID_DUP:
                 message = "같은 아이디가 존재합니다.";
@@ -79,8 +69,8 @@ public class UserController {
         return "alert";
     }
 
-     // 로그인
-     // 로그인 상태면 index 로 이동
+    // 로그인
+    // 로그인 상태면 index 로 이동
     @GetMapping("/login")
     public String loginPage(Model model, HttpServletRequest httpServletRequest) {
         if (httpServletRequest.getSession(false) != null) {
@@ -91,10 +81,9 @@ public class UserController {
     }
 
 
-
-     // 로그인
-     // 로그인에 실패하면 실패 사유를 alert 창으로 나타냄
-     // 성공하면 index 로 이동함
+    // 로그인
+    // 로그인에 실패하면 실패 사유를 alert 창으로 나타냄
+    // 성공하면 index 로 이동함
     @PostMapping("/login")
     public String login(@ModelAttribute LoginDto loginDto, HttpServletRequest httpServletRequest, Model model) {
 
