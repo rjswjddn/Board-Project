@@ -120,11 +120,26 @@ public class BoardService {
     }
 
 
+    // Seq로 게시물 찾고 dto로 변환하여 return
+    public BoardResponseDto findByBoardSeq(Long boardSeq) {
+        BoardResponseDto boardResponseDto = new BoardResponseDto(boardRepository.findByBoardSeq(boardSeq));
+        return boardResponseDto;
+    }
 
+    // Seq로 게시물을 찾아 board_status를 0으로 변경
+    public void deleteBoard(Long boardSeq) {
+        boardRepository.deleteByBoardSeq(boardSeq);
+    }
 
+    // 게시물 찾아 수정하고 저장
+    public void updateBoard(Long boardSeq, BoardRequestDto boardRequestDto) {
+        BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
+        boardEntity.setBoardType(boardRequestDto.getBoardType());
+        boardEntity.setBoardTitle(boardRequestDto.getBoardTitle());
+        boardEntity.setBoardContent(boardRequestDto.getBoardContent());
 
-
-
+        boardRepository.save(boardEntity);
+    }
 
 
 }

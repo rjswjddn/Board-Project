@@ -59,25 +59,20 @@ public class BoardResponseDto {
     }
 
 
-//    private BoardResponseDto convertToBoardResponseDto(BoardEntity boardEntity) {
-//        BoardResponseDto boardResponseDto = BoardResponseDto.builder()
-//                .boardSeq(boardEntity.getBoardSeq())
-//                .boardTitle(boardEntity.getBoardTitle())
-//                .boardType(BoardType.valueOf(boardEntity.getBoardType()))
-//                .boardContent(boardEntity.getBoardContent())
-//                .commentCnt(boardEntity.getCommentCnt())
-//                .viewCnt(boardEntity.getViewCnt())
-//                .likeCnt(boardEntity.getLikeCnt())
-//                .imageYn(boardEntity.isImageYn())
-//                .boardStatus(boardEntity.isBoardStatus())
-//                .boardCreatedDate(boardEntity.getBoardCreatedDate())
-//                .userSeq(boardEntity.getUserSeq())
-//                .build();
-//        boardResponseDto.setUserId(null);
-//
-//        return boardResponseDto;
-//    }
-
+    public BoardResponseDto(BoardEntity boardEntity) {
+        this.boardSeq = boardEntity.getBoardSeq();
+        this.boardTitle = boardEntity.getBoardTitle();
+        this.boardContent = boardEntity.getBoardContent();
+        this.boardType = boardEntity.getBoardType();
+        this.commentCnt = boardEntity.getCommentCnt();
+        this.viewCnt = boardEntity.getViewCnt();
+        this.likeCnt = boardEntity.getLikeCnt();
+        this.imageYn = boardEntity.isImageYn();
+        this.boardStatus = boardEntity.isBoardStatus();
+        this.boardCreatedDate = boardEntity.getBoardCreatedDate();
+        this.boardUpdatedDate = boardEntity.getBoardUpdatedDate();
+        this.userSeq = boardEntity.getUserSeq();
+    }
 
 
 }

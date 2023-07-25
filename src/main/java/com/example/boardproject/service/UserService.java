@@ -22,15 +22,9 @@ public class UserService {
     private final UserRepository userRepository;
 
     // 회원가입 확인
-    public RegisterEnum checkRegister(RegisterDto registerDto){
+    public RegisterEnum checkRegister(RegisterDto registerDto) {
         RegisterEnum registerEnum = RegisterEnum.PASS;
-        if(!StringUtils.hasText(registerDto.getUserId())){
-            registerEnum = RegisterEnum.ID_NULL;
-        }
-        else if(!StringUtils.hasText(registerDto.getUserPwd())){
-            registerEnum = RegisterEnum.PWD_NULL;
-        }
-        else if(userRepository.existsByUserId(registerDto.getUserId())){
+        if (userRepository.existsByUserId(registerDto.getUserId())) {
             registerEnum = RegisterEnum.ID_DUP;
         }
 
@@ -82,10 +76,10 @@ public class UserService {
     }
 
 
-    public Map<String, String> registerHandler(Errors errors){
+    public Map<String, String> registerHandler(Errors errors) {
         Map<String, String> result = new HashMap<>();
 
-        for(FieldError error : errors.getFieldErrors()){
+        for (FieldError error : errors.getFieldErrors()) {
             String keyName = String.format("valid_%s", error.getField());
             result.put(keyName, error.getDefaultMessage());
         }
@@ -94,6 +88,12 @@ public class UserService {
         return result;
     }
 
+
+    // seq로 유저를 찾아 dto에 저장하고 반환
+    public UserDto findByUserSeq(Long userSeq) {
+        UserDto userDto = new UserDto(userRepository.findByUserSeq(userSeq));
+        return userDto;
+    }
 
 
 }
