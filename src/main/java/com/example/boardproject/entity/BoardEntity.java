@@ -1,10 +1,7 @@
 package com.example.boardproject.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -18,22 +15,20 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name="board")
 public class BoardEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="board_seq")
     private Long boardSeq;
 
-    @Column(name="board_title", length = 45)
+    @Column(name="board_title")
     private String boardTitle;
 
-    @Column(name = "board_content", length = 3000)
+    @Column(name = "board_content")
     private String boardContent;
 
-    @Column(name="board_type", nullable = false, length = 1)
+    @Column(name="board_type")
     private String boardType;
-
-//    @Column(name="board_type", nullable = false)
-//    private BoardType boardType;
 
     @Column(name = "comment_cnt")
     private int commentCnt;
@@ -44,10 +39,10 @@ public class BoardEntity {
     @Column(name = "like_cnt")
     private int likeCnt;
 
-    @Column(name = "image_yn", columnDefinition = "BIT(1)")
+    @Column(name = "image_yn")
     private boolean imageYn;
 
-    @Column(name = "board_status", columnDefinition = "BIT(1)")
+    @Column(name = "board_status")
     private boolean boardStatus;
 
     @CreatedDate

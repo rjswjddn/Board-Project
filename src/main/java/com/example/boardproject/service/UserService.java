@@ -94,6 +94,12 @@ public class UserService {
         return result;
     }
 
+    public Long findUserSeqByUserId(String userId) {
+        return userRepository.findUserSeqByUserId(userId);
+    }
 
+    public int getUserAdminByUserId(String userId) {
+        return userRepository.getUserAdminByUserId(userId);
+    }
 
 }

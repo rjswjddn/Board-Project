@@ -1,6 +1,7 @@
 package com.example.boardproject.dto;
 
 import com.example.boardproject.entity.BoardEntity;
+import jakarta.persistence.Column;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -42,23 +43,13 @@ public class BoardRequestDto {
     private Long userSeq;
 
     @Transient
+    private String userId;
+
+    @Transient
     private String imagePath;
 
-    //꺼내올때
-//    public BoardRequestDto(BoardEntity boardEntity){
-//        this.boardSeq=boardEntity.getBoardSeq();
-//        this.boardTitle=boardEntity.getBoardTitle();
-//        this.boardStatus = BoardStatus.valueOf(boardEntity.getBoardStatus());
-//        this.boardContent=boardEntity.getBoardContent();
-//        this.commentCnt=boardEntity.getCommentCnt();
-//        this.viewCnt=boardEntity.getViewCnt();
-//        this.likeCnt=boardEntity.getLikeCnt();
-//        this.imageYn=boardEntity.isImageYn();
-//        this.deleteYn=boardEntity.isDeleteYn();
-//        this.boardCreatedDate=boardEntity.getBoardCreatedDate();
-//
-//        this.userSeq=boardEntity.getUserSeq();
-//    }
+    @Transient
+    private String imageName;
 
     //INSERT
     public BoardEntity toEntity() {

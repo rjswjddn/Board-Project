@@ -1,6 +1,5 @@
 package com.example.boardproject.dto;
 
-import com.example.boardproject.entity.BoardEntity;
 import com.example.boardproject.entity.BoardType;
 import jakarta.persistence.Transient;
 import lombok.*;
@@ -59,24 +58,11 @@ public class BoardResponseDto {
     }
 
 
-//    private BoardResponseDto convertToBoardResponseDto(BoardEntity boardEntity) {
-//        BoardResponseDto boardResponseDto = BoardResponseDto.builder()
-//                .boardSeq(boardEntity.getBoardSeq())
-//                .boardTitle(boardEntity.getBoardTitle())
-//                .boardType(BoardType.valueOf(boardEntity.getBoardType()))
-//                .boardContent(boardEntity.getBoardContent())
-//                .commentCnt(boardEntity.getCommentCnt())
-//                .viewCnt(boardEntity.getViewCnt())
-//                .likeCnt(boardEntity.getLikeCnt())
-//                .imageYn(boardEntity.isImageYn())
-//                .boardStatus(boardEntity.isBoardStatus())
-//                .boardCreatedDate(boardEntity.getBoardCreatedDate())
-//                .userSeq(boardEntity.getUserSeq())
-//                .build();
-//        boardResponseDto.setUserId(null);
-//
-//        return boardResponseDto;
-//    }
+
+
+
+
+
 
 
 
