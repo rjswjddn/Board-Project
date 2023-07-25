@@ -21,20 +21,17 @@
         <main>
             <div class="container-fluid px-4">
                 <h1 class="mt-4">Board</h1>
-                <!--        <ol class="breadcrumb mb-4">-->
-                <!--          <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>-->
-                <!--          <li class="breadcrumb-item active">Tables</li>-->
-                <!--        </ol>-->
-                <!--        <div class="card mb-4">-->
-                <!--          <div class="card-body">-->
-                <!--            DataTables is a third party plugin that is used to generate the demo table below. For more information about DataTables, please visit the-->
-                <!--            <a target="_blank" href="https://datatables.net/">official DataTables documentation</a>-->
-                <!--          </div>-->
-                <!--        </div>-->
+
                 <div class="card mb-4">
                     <div class="card-header">
                         <form action="/search" method="GET" id="searchForm" class="d-flex align-items-center">
                             <div class="row gx-2">
+                                <div class="col-auto">
+<!--                                    <form id="deleteForm" action="/board/delete" method="post">-->
+<!--                                        <button type="submit" class="btn btn-danger btn-sm ms-auto"><i class="fas fa-trash-alt"></i> 삭제</button>-->
+<!--                                        <input type="hidden" id="deleteIds" name="deleteIds" th:value="" />-->
+<!--                                    </form>-->
+                                </div>
                                 <div class="col-auto">
                                     <select name="searchType" class="form-select form-select-sm" title="검색 유형 선택">
                                         <option value="boardTitle">제목</option>
@@ -56,7 +53,7 @@
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th><input type="checkbox"/></th>
+                                <th th:if="${isAdmin}" ><input type="checkbox" id="selectAll"/></th>
                                 <th>번호</th>
                                 <th>제목</th>
                                 <th>작성자</th>
@@ -67,7 +64,7 @@
                             </thead>
                             <tbody>
                             <tr th:each="board: ${Boards}">
-                                <td><input type="checkbox"/></td>
+                                <td th:if="${isAdmin}" ><input type="checkbox" class="checkbox-item"/></td>
                                 <td th:text="${board.boardSeq}"></td>
                                 <td>
                                     <!-- 신규 등록 아이콘 표시 -->
@@ -127,6 +124,33 @@
         <div th:replace="/fragment/footer.html :: fragment-footer"></div>
     </div>
 </div>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.checkbox-item');
+
+        selectAllCheckbox.addEventListener('click', function () {
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+    });
+
+    // $(document).ready(function () {
+    //     $("#deleteForm").submit(function (event) {
+    //         // 선택된 게시물의 boardSeq 값을 배열로 수집
+    //         var selectedIds = [];
+    //         $(".checkbox-item:checked").each(function () {
+    //             selectedIds.push($(this).val());
+    //         });
+    //
+    //         // 배열을 쉼표로 구분한 문자열로 변환하여 deleteIds hidden 필드에 값 설정
+    //         $("#deleteIds").val(selectedIds.join(","));
+    //     });
+    // });
+
+</script>
 
 <!--        추가해야 드롭다운 가능-->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"

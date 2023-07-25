@@ -1,6 +1,5 @@
 package com.example.boardproject.dto;
 
-import com.example.boardproject.entity.BoardEntity;
 import com.example.boardproject.entity.BoardType;
 import jakarta.persistence.Transient;
 import lombok.*;
@@ -59,6 +58,7 @@ public class BoardResponseDto {
     }
 
 
+
     public BoardResponseDto(BoardEntity boardEntity) {
         this.boardSeq = boardEntity.getBoardSeq();
         this.boardTitle = boardEntity.getBoardTitle();
@@ -73,6 +73,7 @@ public class BoardResponseDto {
         this.boardUpdatedDate = boardEntity.getBoardUpdatedDate();
         this.userSeq = boardEntity.getUserSeq();
     }
+
 
 
 }

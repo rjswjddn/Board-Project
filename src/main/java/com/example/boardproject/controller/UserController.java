@@ -30,7 +30,7 @@ public class UserController {
     @GetMapping("/register")
     public String registerPage(Model model, HttpServletRequest httpServletRequest) {
         if (httpServletRequest.getSession(false) != null) {
-            return "redirect:/index";
+            return "redirect:/board";
         }
         model.addAttribute("registerDto", new RegisterDto());
         return "register";
@@ -74,7 +74,7 @@ public class UserController {
     @GetMapping("/login")
     public String loginPage(Model model, HttpServletRequest httpServletRequest) {
         if (httpServletRequest.getSession(false) != null) {
-            return "redirect:/index";
+            return "redirect:/board";
         }
         model.addAttribute("loginDto", new LoginDto());
         return "/login";
