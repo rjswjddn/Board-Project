@@ -2,7 +2,6 @@ package com.example.boardproject.controller;
 
 import com.example.boardproject.dto.BoardRequestDto;
 import com.example.boardproject.dto.BoardResponseDto;
-import com.example.boardproject.dto.UserDto;
 import com.example.boardproject.service.BoardService;
 import com.example.boardproject.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -94,7 +93,6 @@ public class BoardController {
 
 
 
-
     //게시물 작성 페이지
     @GetMapping("board/register")
     public String registerBoardView(Model model, HttpSession httpSession) {
@@ -161,67 +159,15 @@ public class BoardController {
     }
 
 
-    @GetMapping("board_view")
-    public String viewBoard(@RequestParam("boardseq") Long boardSeq, Model model, HttpServletRequest httpServletRequest) {
-        BoardResponseDto boardResponseDto = boardService.findByBoardSeq(boardSeq);
-
-        // 게시물 등록 유저 정보
-        UserDto userDto = userService.findByUserSeq(boardResponseDto.getUserSeq());
-        String boardUserId = userDto.getUserId();
-
-        // 현재 로그인 중인 유저 정보
-        HttpSession session = httpServletRequest.getSession();
-        String loginId = (String) session.getAttribute("userId");
-
-        // 같으면 true 다르면 false
-        boolean boardAuth = loginId.equals(boardUserId);
-
-        model.addAttribute("boardResponseDto", boardResponseDto);
-        model.addAttribute("boardUserId", boardUserId);
-        model.addAttribute("boardAuth", boardAuth);
-        return "board_view";
-    }
-
-    // 게시물 삭제
-    @GetMapping("board/delete")
-    public String deleteBoard(Model model, @RequestParam("boardseq") Long boardSeq, @RequestParam("boarduserid") String boardUserId, HttpServletRequest httpServletRequest) {
-        // 로그인 유저와 게시물 유저가 같은지 확인
-        HttpSession session = httpServletRequest.getSession();
-        if (!session.getAttribute("userId").equals(boardUserId)) {
-            return "board_list";
-        }
-
-        boardService.deleteBoard(boardSeq);
-
-        model.addAttribute("message", "게시글이 삭제 되었습니다.");
-        model.addAttribute("url", "/board");
-        return "alert";
-    }
-
-    // 게시물 업데이트 페이지 이동
-    @GetMapping("board/update")
-    public String updateBoardPage(Model model, @RequestParam("boardseq") Long boardSeq, @RequestParam("boarduserid") String boardUserId, HttpServletRequest httpServletRequest) {
-        // 로그인 유저와 게시물 유저가 같은지 확인
-        HttpSession session = httpServletRequest.getSession();
-        if (!session.getAttribute("userId").equals(boardUserId)) {
-            return "board_list";
-        }
 
 
-        BoardResponseDto boardResponseDto = boardService.findByBoardSeq(boardSeq);
-        model.addAttribute("boardResponseDto", boardResponseDto);
-        model.addAttribute("boardUserId", boardUserId);
-        return "board_update";
-    }
 
-    // 게시물 업데이트 적용
-    @PostMapping("board/update")
-    public String updateBoard(@RequestParam("boardseq") Long boardSeq, @ModelAttribute("boardResponseDto") BoardResponseDto boardResponseDto) {
-        BoardRequestDto boardRequestDto = new BoardRequestDto(boardResponseDto);
-        boardService.updateBoard(boardSeq, boardRequestDto);
 
-        return "redirect:/board_view?boardseq=" + boardSeq;
-    }
+
+
+
+
+
 
 
 }
