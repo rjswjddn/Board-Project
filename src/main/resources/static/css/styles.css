@@ -11241,8 +11241,3 @@ body {
   font-size: 0.75rem;
   border-radius: 0.375rem !important;
 }
-
-.thead-color {
-  background-color: #000; /* 검정색으로 변경 */
-  color: #ffffff; /* 글자 색을 흰색으로 변경 */
-}

@@ -5,7 +5,7 @@
     <div class="sb-sidenav-menu">
       <div class="nav">
         <div class="sb-sidenav-menu-heading">Core</div>
-        <a class="nav-link" th:href="@{/index}">
+        <a class="nav-link" th:href="@{index}">
           <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
           Dashboard
         </a>
@@ -17,8 +17,8 @@
         </a>
         <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
           <nav class="sb-sidenav-menu-nested nav">
-            <a class="nav-link" th:href="@{/layout-static}">Static Navigation</a>
-            <a class="nav-link" th:href="@{/layout-sidenav-light}">Light Sidenav</a>
+            <a class="nav-link" th:href="@{layout-static}">Static Navigation</a>
+            <a class="nav-link" th:href="@{layout-sidenav-light}">Light Sidenav</a>
           </nav>
         </div>
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
@@ -34,9 +34,9 @@
             </a>
             <div class="collapse" id="pagesCollapseAuth" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
               <nav class="sb-sidenav-menu-nested nav">
-                <a class="nav-link" th:href="@{/login}">Login</a>
-                <a class="nav-link" th:href="@{/register}">Register</a>
-                <a class="nav-link" th:href="@{/password}">Forgot Password</a>
+                <a class="nav-link" th:href="@{login}">Login</a>
+                <a class="nav-link" th:href="@{register}">Register</a>
+                <a class="nav-link" th:href="@{password}">Forgot Password</a>
               </nav>
             </div>
             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseError" aria-expanded="false" aria-controls="pagesCollapseError">
@@ -45,19 +45,19 @@
             </a>
             <div class="collapse" id="pagesCollapseError" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
               <nav class="sb-sidenav-menu-nested nav">
-                <a class="nav-link" th:href="@{/401}">401 Page</a>
-                <a class="nav-link" th:href="@{/404}">404 Page</a>
-                <a class="nav-link" th:href="@{/500}">500 Page</a>
+                <a class="nav-link" th:href="@{401}">401 Page</a>
+                <a class="nav-link" th:href="@{404}">404 Page</a>
+                <a class="nav-link" th:href="@{500}">500 Page</a>
               </nav>
             </div>
           </nav>
         </div>
         <div class="sb-sidenav-menu-heading">Addons</div>
-        <a class="nav-link" th:href="@{/charts}">
+        <a class="nav-link" th:href="@{charts}">
           <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
           Charts
         </a>
-        <a class="nav-link" th:href="@{/tables}">
+        <a class="nav-link" th:href="@{tables}">
           <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
           Tables
         </a>
