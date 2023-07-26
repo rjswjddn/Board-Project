@@ -10,6 +10,7 @@ import com.example.boardproject.repository.BoardRepository;
 import com.example.boardproject.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class BoardService {
-//    @Value("${upload.directory}")
+    @Value("${upload.directory}")
     private String uploadDirectory;
 
     private final BoardRepository boardRepository;
@@ -64,6 +65,7 @@ public class BoardService {
             }
         }
     }
+
 
     //검색
     public Page<BoardResponseDto> searchByTitle(String title, Pageable pageable) {
@@ -145,14 +147,21 @@ public class BoardService {
         boardRepository.save(boardEntity);
     }
 
+    public boolean isValidBoardTitle(String boardTitle) {
+        return boardTitle != null && !boardTitle.trim().isEmpty();
+    }
+
+    public boolean isValidContent(String boardContent) {
+        return boardContent != null && !boardContent.trim().isEmpty();
+    }
+
     public void validateBoardRequest(BoardRequestDto boardRequestDto, BindingResult bindingResult) {
-        if (boardRequestDto.getBoardTitle().isEmpty()) {
+        if (!isValidBoardTitle(boardRequestDto.getBoardTitle())) {
             bindingResult.rejectValue("boardTitle", "empty.boardTitle", "제목 미입력");
         }
-        if (boardRequestDto.getBoardContent().isEmpty()) {
+        if (!isValidContent(boardRequestDto.getBoardContent())) {
             bindingResult.rejectValue("boardContent", "empty.boardContent", "내용 미입력");
         }
-
     }
 
     // Seq로 게시물 찾고 dto로 변환하여 return
@@ -177,6 +186,19 @@ public class BoardService {
 
         boardRepository.save(boardEntity);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }

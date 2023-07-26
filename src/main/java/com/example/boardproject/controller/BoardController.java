@@ -10,7 +10,9 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,10 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Controller
@@ -51,29 +50,21 @@ public class BoardController {
         model.addAttribute("isAdmin", isAdmin);
 
         Pageable pageable = PageRequest.of(page, 10);
-        List<BoardResponseDto> noticeBoards = boardService.getNoticeBoardsWithUsers();
         Page<BoardResponseDto> normalBoards = boardService.getAllNormalBoardsWithUsers(pageable);
 
-        // 공지글 최대 5개
-        int maxNoticeCount = 5;
-        if (noticeBoards.size() > maxNoticeCount) {
-            noticeBoards = noticeBoards.subList(0, maxNoticeCount);
-        }
-
-        // 첫페이지 공지글과 일반글 합쳐서 모델에 추가
+        // 첫 페이지는 공지글과 일반글 합쳐서 모델에 추가
         List<BoardResponseDto> allBoards = new ArrayList<>();
         if (page == 0) {
+            List<BoardResponseDto> noticeBoards = boardService.getNoticeBoardsWithUsers();
             allBoards.addAll(noticeBoards);
         }
         allBoards.addAll(normalBoards.getContent());
 
-        for (BoardResponseDto board: allBoards) {
-        log.info(board.toString());
-        }
-
         model.addAttribute("Boards", allBoards);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", normalBoards.getTotalPages());
+        model.addAttribute("isSearch", false);
+
         return "board_list";
     }
 
@@ -82,13 +73,17 @@ public class BoardController {
     public String search(@RequestParam(name = "searchType", defaultValue = "boardTitle") String searchType,
                          @RequestParam(name = "keyword") String keyword,
                          @RequestParam(name = "page", defaultValue = "0") int page,
-                         Model model) {
+                         Model model, HttpServletRequest httpServletRequest) {
         int pageSize = 10;
         Page<BoardResponseDto> searchResult = boardService.searchBoards(searchType, keyword, page, pageSize);
 
         model.addAttribute("Boards", searchResult.getContent());
         model.addAttribute("currentPage", page);
+        model.addAttribute("searchType", searchType);
+        model.addAttribute("keyword", keyword);
         model.addAttribute("totalPages", searchResult.getTotalPages());
+        model.addAttribute("isSearch", true);
+
         return "board_list";
     }
 

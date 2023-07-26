@@ -24,12 +24,11 @@
                 <h1 class="mt-4">Board</h1>
                 <div class="card mb-4">
                     <div class="card-body">
-                        <form th:action="@{/board/register}" th:object="${boardRequestDto}" method="post" enctype="multipart/form-data" accept-charset="UTF-8">
+                        <form th:action="@{/board/register}" th:object="${boardRequestDto}" method="post" enctype="multipart/form-data" accept-charset="UTF-8" >
 
                             <div class="mb-3">
                                 <label for="boardType" class="form-label">게시글 종류 선택</label>
-                                <select name="boardTypeInput" id="boardType" class="form-select form-select-sm"
-                                        title="게시글 종류 선택">
+                                <select name="boardTypeInput" id="boardType" class="form-select form-select-sm" title="게시글 종류 선택" >
                                     <option value="G">일반글</option>
                                     <option th:if="${isAdmin}" value="N">공지글</option>
                                     <option th:unless="${isAdmin}" value="S">비밀글</option>
@@ -38,8 +37,7 @@
 
                             <div class="mb-3 mt-3">
                                 <label for="title" class="form-label">제목</label>
-                                <input th:field="*{boardTitle}"
-                                       type="text" class="form-control" id="title" onblur="validateTitle(this)">
+                                <input th:field="*{boardTitle}" type="text" class="form-control" id="title" onblur="validateTitleForm(this)">
                                 <div id="titleError" class="text-danger"></div>
                             </div>
 
@@ -51,15 +49,14 @@
 
                             <div class="mb-3">
                                 <label for="content" class="form-label">내용</label>
-                                <input th:field="*{boardContent}"
-                                       type="text" class="form-control" id="content" onblur="validateContent(this)">
+                                <input th:field="*{boardContent}" type="text" class="form-control" id="content" onblur="validateContentForm(this)">
                                 <div id="contentError" class="text-danger"></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="image" class="form-label">이미지 첨부</label>
-                                <input type="file" class="form-control" id="image" name="image"
-                                       onchange="previewImage(this)">
+                                <input type="file" class="form-control" id="image" name="image" onchange="previewImage(this)">
+
                             </div>
 
                             <!-- 이미지 미리보기를 보여줄 요소 -->
@@ -69,26 +66,50 @@
                             </div>
 
                             <script>
-                                function validateTitle(input) {
-                                    var title = input.value;
-                                    var errorSpan = $("#titleError");
-                                    errorSpan.html("");
+                                //유효성 검사
+                                function validateTitleForm() {
+                                    var title = document.getElementById('title').value;
+                                    var titleError = document.getElementById('titleError');
+
+                                    // 에러 메시지 초기화
+                                    titleError.innerHTML = "";;
 
                                     if (title.trim() === '') {
-                                        errorSpan.html("제목을 입력하세요.");
+                                        titleError.innerHTML = "제목을 입력하세요.";
+                                        return false;
                                     }
-                                };
-
-                                function validateContent(input) {
-                                    var content = input.value;
-                                    var errorSpan = $("#contentError");
-                                    errorSpan.html("");
 
                                     if (content.trim() === '') {
-                                        errorSpan.html("내용을 입력하세요.");
+                                        contentError.innerHTML = "내용을 입력하세요.";
+                                        return false;
                                     }
+
+                                    return true;
                                 }
 
+                                function validateContentForm() {
+                                    var content = document.getElementById('content').value;
+                                    var contentError = document.getElementById('contentError');
+
+                                    // 에러 메시지 초기화
+                                    contentError.innerHTML = "";
+
+                                    if (content.trim() === '') {
+                                        contentError.innerHTML = "내용을 입력하세요.";
+                                        return false;
+                                    }
+
+                                    return true;
+                                }
+
+                                //enter 키 form submit 방지
+                                document.addEventListener('keydown', function(event) {
+                                    if (event.keyCode === 13) {
+                                        event.preventDefault();
+                                    }
+                                }, true);
+
+                                //이미지 첨부시 미리보기
                                 function previewImage(input) {
                                     var imagePreview = document.getElementById('imagePreview');
                                     var previewImg = document.getElementById('previewImg');
@@ -107,6 +128,7 @@
                                         imagePreview.style.display = 'none';
                                     }
                                 }
+
                             </script>
 
                             <div style="margin-top: 20px;">
