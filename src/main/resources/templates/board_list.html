@@ -71,7 +71,7 @@
                                 <td th:text="${board.boardSeq}"></td>
                                 <td>
                                     <!-- 신규 등록 아이콘 표시 -->
-                                    <span th:if="${board.isNew}">
+                                    <span th:if="${T(java.time.LocalDateTime).now().minusHours(24).isBefore(board.boardCreatedDate)}">
                                         <i class="fas fa-bell"></i>
                                     </span>
                                     <span th:if="${board.getBoardTypeEnum().getIconClass() != null}">

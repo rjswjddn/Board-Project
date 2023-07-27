@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -40,32 +38,13 @@ public class BoardService {
 
     //공지글
     public List<BoardResponseDto> getNoticeBoardsWithUsers() {
-        List<BoardResponseDto> noticeBoards = boardRepository.findNoticeBoardsWithUsers();
-        setNewBoards(noticeBoards);
-        return noticeBoards;
+        return boardRepository.findNoticeBoardsWithUsers();
     }
 
     //일반글 페이징 조회
     public Page<BoardResponseDto> getAllNormalBoardsWithUsers(Pageable pageable) {
-        Page<BoardResponseDto> normalBoards = boardRepository.findNormalBoardsWithUsers(pageable);
-        setNewBoards(normalBoards.getContent());
-        return normalBoards;
+        return boardRepository.findNormalBoardsWithUsers(pageable);
     }
-
-    //신규 등록 게시물 표시
-    private void setNewBoards(List<BoardResponseDto> boards) {
-        LocalDateTime currentTime = LocalDateTime.now();
-        for (BoardResponseDto boardResponseDto : boards) {
-            LocalDateTime boardCreatedDate = boardResponseDto.getBoardCreatedDate();
-            if (boardCreatedDate != null) {
-                Duration duration = Duration.between(boardCreatedDate, currentTime);
-                if (duration.toHours() < 24) {
-                    boardResponseDto.setIsNew(true);
-                }
-            }
-        }
-    }
-
 
     //검색
     public Page<BoardResponseDto> searchByTitle(String title, Pageable pageable) {
@@ -85,7 +64,6 @@ public class BoardService {
         }
     }
 
-    //검색 + 신규 등록 게시물 표시 뜨도록
     public Page<BoardResponseDto> searchBoards(String searchType, String keyword, int page, int pageSize) {
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("boardSeq").descending());
         Page<BoardResponseDto> searchResult;
@@ -100,10 +78,8 @@ public class BoardService {
             searchResult = new PageImpl<>(Collections.emptyList());
         }
 
-        setNewBoards(searchResult.getContent());
         return searchResult;
     }
-
 
 
     //게시물 등록
@@ -120,9 +96,8 @@ public class BoardService {
             }
 
             // 파일 확장자 확인 (이미지 파일 여부 체크)
-            String[] allowedExtensions = {"jpg", "jpeg", "png", "gif"};
             String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-            boolean isAllowedExtension = Arrays.stream(allowedExtensions).anyMatch(extension -> extension.equals(fileExtension));
+            boolean isAllowedExtension = isAllowedExtension(fileExtension);
             if (!isAllowedExtension) {
                 throw new IOException("이미지 파일만 업로드 가능합니다.");
             }
@@ -131,6 +106,7 @@ public class BoardService {
             String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
             String imagePath = uploadDirectory + fileName;
             Path imageFilePath = Paths.get(imagePath);
+
             Files.createDirectories(imageFilePath.getParent());
             Files.write(imageFilePath, file.getBytes());
 
@@ -143,8 +119,14 @@ public class BoardService {
 
             // board 테이블의 imageYn 속성을 true로 설정
             boardEntity.setImageYn(true);
+
         }
         boardRepository.save(boardEntity);
+    }
+
+    private boolean isAllowedExtension(String fileExtension) {
+        String[] allowedExtensions = {"jpg", "jpeg", "png", "gif"};
+        return Arrays.stream(allowedExtensions).anyMatch(extension -> extension.equals(fileExtension));
     }
 
     public boolean isValidBoardTitle(String boardTitle) {
@@ -152,17 +134,20 @@ public class BoardService {
     }
 
     public boolean isValidContent(String boardContent) {
-        return boardContent != null && !boardContent.trim().isEmpty();
+        return boardContent != null && !boardContent.trim().isEmpty() && boardContent.length() <= 2000;
     }
 
+    // 유효성 검사
     public void validateBoardRequest(BoardRequestDto boardRequestDto, BindingResult bindingResult) {
         if (!isValidBoardTitle(boardRequestDto.getBoardTitle())) {
             bindingResult.rejectValue("boardTitle", "empty.boardTitle", "제목 미입력");
         }
         if (!isValidContent(boardRequestDto.getBoardContent())) {
-            bindingResult.rejectValue("boardContent", "empty.boardContent", "내용 미입력");
+            bindingResult.rejectValue("boardContent", "invalid.boardContent", "내용은 최소 1byte에서 최대 2000byte까지 허용됩니다.");
         }
     }
+
+
 
     // Seq로 게시물 찾고 dto로 변환하여 return
     public BoardResponseDto findByBoardSeq(Long boardSeq) {
@@ -170,7 +155,6 @@ public class BoardService {
         return boardResponseDto;
 
     }
-        
 
     // Seq로 게시물을 찾아 board_status를 0으로 변경
     public void deleteBoard(Long boardSeq) {

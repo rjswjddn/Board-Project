@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class BoardController {
     public String search(@RequestParam(name = "searchType", defaultValue = "boardTitle") String searchType,
                          @RequestParam(name = "keyword") String keyword,
                          @RequestParam(name = "page", defaultValue = "0") int page,
-                         Model model, HttpServletRequest httpServletRequest) {
+                         Model model) {
         int pageSize = 10;
         Page<BoardResponseDto> searchResult = boardService.searchBoards(searchType, keyword, page, pageSize);
 
@@ -88,8 +89,6 @@ public class BoardController {
     }
 
 
-
-
     //게시물 작성 페이지
     @GetMapping("board/register")
     public String registerBoardView(Model model, HttpSession httpSession) {
@@ -100,14 +99,18 @@ public class BoardController {
             return "redirect:/login";
         }
 
+        // 세션에서 관리자 여부 가져오기
+        int isAdmin = (int) httpSession.getAttribute("admin");
+
         // 사용자의 user_admin 값에 따라서 Thymeleaf 템플릿에 전달할 값을 설정
-        boolean isAdmin = userService.getUserAdminByUserId(loggedInUserId) == 1;
+//        boolean isAdmin = userService.getUserAdminByUserId(loggedInUserId) == 1;
         model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("userId", loggedInUserId);
 
         BoardRequestDto boardRequestDto = new BoardRequestDto();
-        boardRequestDto.setUserId(loggedInUserId); // 작성 페이지에 로그인한 사용자의 아이디 자동 설정
-
+        boardRequestDto.setUserId(loggedInUserId);
         model.addAttribute("boardRequestDto", boardRequestDto);
+
         return "board_register";
     }
 
@@ -116,8 +119,9 @@ public class BoardController {
     public String registerBoard(@Valid @ModelAttribute("boardRequestDto") BoardRequestDto boardRequestDto,
                                 @RequestParam("boardTypeInput") String boardType,
                                 @RequestParam("image") MultipartFile file,
+                                BindingResult bindingResult,
                                 HttpServletRequest httpServletRequest,
-                                BindingResult bindingResult) {
+                                RedirectAttributes redirectAttributes) {
         try {
             boardService.validateBoardRequest(boardRequestDto, bindingResult);
             if (bindingResult.hasErrors()) {
@@ -134,7 +138,7 @@ public class BoardController {
                 String userId = (String) session.getAttribute("userId");
                 Long userSeq = userService.findUserSeqByUserId(userId); // userId로 userSeq를 찾아옴
                 boardRequestDto.setUserId(userId);
-                boardRequestDto.setUserSeq(userSeq); // boardRequestDto에 userSeq 설정
+                boardRequestDto.setUserSeq(userSeq);
             }
 
             // 백엔드에서의 요청된 userId와 세션에 저장된 userId 일치 여부 확인
@@ -150,10 +154,13 @@ public class BoardController {
             boardService.registerBoard(boardRequestDto, file);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error occurred during board registration: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/board/register";
         }
         return "redirect:/board";
     }
+
 
 
     @GetMapping("board_view")
