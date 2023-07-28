@@ -149,6 +149,8 @@ public class BoardService {
 
 
 
+
+
     // Seq로 게시물 찾고 dto로 변환하여 return
     public BoardResponseDto findByBoardSeq(Long boardSeq) {
         BoardResponseDto boardResponseDto = new BoardResponseDto(boardRepository.findByBoardSeq(boardSeq));

@@ -41,13 +41,13 @@ public class BoardController {
                         Model model, HttpSession httpSession) {
 
         // 로그인한 사용자의 아이디 가져오기
-        String loggedInUserId = (String) httpSession.getAttribute("userId");
-        if (loggedInUserId == null) {
+        String userId = (String) httpSession.getAttribute("userId");
+        if (userId == null) {
             return "redirect:/login";
         }
 
         // 사용자의 user_admin 값에 따라서 Thymeleaf 템플릿에 전달할 값을 설정
-        boolean isAdmin = userService.getUserAdminByUserId(loggedInUserId) == 1;
+        boolean isAdmin = userService.getUserAdminByUserId(userId) == 1;
         model.addAttribute("isAdmin", isAdmin);
 
         Pageable pageable = PageRequest.of(page, 10);
@@ -141,16 +141,19 @@ public class BoardController {
                 boardRequestDto.setUserSeq(userSeq);
             }
 
-            // 백엔드에서의 요청된 userId와 세션에 저장된 userId 일치 여부 확인
-//            String loggedInUserId = (String) session.getAttribute("userId");
-//            if (!loggedInUserId.equals(boardRequestDto.getUserId())) {
-//                // 요청된 userId와 로그인한 사용자의 userId가 일치하지 않는 경우 요청 거부
-//                log.error("Unauthorized request for userId: " + boardRequestDto.getUserId());
-//                return "redirect:/500";
-//            }
-
-            log.info("전달 dto {}", boardRequestDto);
+            log.info("게시글 작성 요청: {}", boardRequestDto);
             boardRequestDto.setBoardType(boardType);
+
+            // 요청받은 boardType이 "N"인 경우 관리자 여부를 확인
+            if ("N".equals(boardType) && session != null) {
+                int isAdmin = (int) session.getAttribute("admin");
+                if (isAdmin != 1) {
+                    String userId = (String) session.getAttribute("userId");
+                    log.error("관리자가 아닌 사용자 (" + userId + ")가 공지글을 작성하려고 시도했습니다.");
+                    redirectAttributes.addFlashAttribute("errorMessage", "관리자만 공지글을 작성할 수 있습니다.");
+                    return "redirect:/board/register";
+                }
+            }
             boardService.registerBoard(boardRequestDto, file);
 
         } catch (IOException e) {
@@ -160,6 +163,8 @@ public class BoardController {
         }
         return "redirect:/board";
     }
+
+
 
 
 
