@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="/fragment/header.html :: fragment-header">
+    <title>Tables - SB Admin</title>
+    <!--  추가-->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body class="sb-nav-fixed">
+
+<div th:replace="/fragment/topnav.html :: fragment-topnav"></div>
+
+<div id="layoutSidenav">
+
+    <div id="layoutSidenav_nav">
+        <div th:replace="/fragment/sidenav.html :: fragment-sidenav"></div>
+    </div>
+
+    <div id="layoutSidenav_content">
+        <main>
+            <div class="container-fluid px-4">
+                <h1 class="mt-4">Board</h1>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <form action="/search" method="GET" id="searchForm" class="d-flex align-items-center">
+                            <div class="row gx-2">
+                                <div class="col-auto">
+<!--                                    <form id="deleteForm" action="/board/delete" method="post">-->
+<!--                                        <button type="submit" class="btn btn-danger btn-sm ms-auto"><i class="fas fa-trash-alt"></i> 삭제</button>-->
+<!--                                        <input type="hidden" id="deleteIds" name="deleteIds" th:value="" />-->
+<!--                                    </form>-->
+                                </div>
+                                <div class="col-auto">
+                                    <select name="searchType" class="form-select form-select-sm" title="검색 유형 선택">
+                                        <option value="boardTitle">제목</option>
+                                        <option value="userSeq">작성자</option>
+                                        <option value="boardContent">글 내용</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <input type="text" name="keyword" class="form-control form-control-sm" placeholder="내용을 입력해 주세요." title="내용 입력" />
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i><span class="skip_info">검색</span></button>
+                                </div>
+                            </div>
+                            <a class="btn btn-primary btn-sm ms-auto" href="board/register"><i class="fas fa-edit"></i> 글 작성</a>
+                        </form>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th th:if="${isAdmin}" ><input type="checkbox" id="selectAll"/></th>
+                                <th>번호</th>
+                                <th>제목</th>
+                                <th>작성자</th>
+                                <th>작성일</th>
+                                <th>조회</th>
+                                <th>좋아요</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="board: ${Boards}">
+                                <td th:if="${isAdmin}" ><input type="checkbox" class="checkbox-item"/></td>
+                                <td th:text="${board.boardSeq}"></td>
+                                <td>
+                                    <!-- 신규 등록 아이콘 표시 -->
+                                    <span th:if="${board.isNew}">
+                                        <i class="fas fa-star"></i>
+                                    </span>
+                                    <span th:if="${board.getBoardTypeEnum().getIconClass() != null}">
+                                        <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>
+                                    </span>
+                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">
+                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>
+                                    </span>
+                                    <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
+                                    <span th:if="${board.commentCnt > 0}" th:text="' [' + ${board.commentCnt} + ']'"></span>
+                                    <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>
+                                </td>
+                                <td th:text="${board.userId}"></td>
+                                <td th:text="${#temporals.format(board.boardCreatedDate, 'yyyy-MM-dd HH:mm' )}"></td>
+                                <td th:text="${board.viewCnt}"></td>
+                                <td th:text="${board.likeCnt}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item">
+                            <a th:href="@{/board(page=0)}" class="page-link">처음</a>
+                        </li>
+
+                        <!-- 이전 5개의 페이지로 이동하는 링크 -->
+                        <li th:classappend="${currentPage < 5}?'disabled'" class="page-item">
+                            <a  th:href="@{/board(page=${(currentPage / 5 * 5) - 5})}" class="page-link">&laquo;</a>
+                        </li>
+
+                        <!-- 페이지 번호 표시 -->
+                        <li th:each="pageNum : ${#numbers.sequence(currentPage / 5 * 5, (currentPage / 5 * 5) + 4)}" class="page-item">
+                            <a th:if="${pageNum < totalPages}" th:href="@{/board(page=${pageNum})}"
+                               th:text="${pageNum + 1}" class="page-link"></a>
+                        </li>
+
+                        <li th:classappend="${(currentPage / 5 * 5) + 5 > totalPages}?'disabled'" class="page-item">
+                            <a th:href="@{/board(page=${(currentPage / 5 * 5) + 5})}" class="page-link">&raquo;</a>
+                        </li>
+
+                        <li class="page-item">
+                            <a th:href="@{/board(page=${totalPages - 1})}" class="page-link">끝</a>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+        </main>
+        <div th:replace="/fragment/footer.html :: fragment-footer"></div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.checkbox-item');
+
+        selectAllCheckbox.addEventListener('click', function () {
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+    });
+
+    // $(document).ready(function () {
+    //     $("#deleteForm").submit(function (event) {
+    //         // 선택된 게시물의 boardSeq 값을 배열로 수집
+    //         var selectedIds = [];
+    //         $(".checkbox-item:checked").each(function () {
+    //             selectedIds.push($(this).val());
+    //         });
+    //
+    //         // 배열을 쉼표로 구분한 문자열로 변환하여 deleteIds hidden 필드에 값 설정
+    //         $("#deleteIds").val(selectedIds.join(","));
+    //     });
+    // });
+
+</script>
+
+<!--        추가해야 드롭다운 가능-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous"></script>
+<script src="/js/scripts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"
+        crossorigin="anonymous"></script>
+<script src="/js/datatables-simple-demo.js"></script>
+
+</body>
+
+</html>
