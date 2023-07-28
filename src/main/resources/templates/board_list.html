@@ -77,7 +77,7 @@
                                     <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">
                                         <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>
                                     </span>
-                                    <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
+                                    <a th:method="get" th:href="@{/board/{boardSeq}(boardSeq = ${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
                                     <span th:if="${board.commentCnt > 0}" th:text="' [' + ${board.commentCnt} + ']'"></span>
                                     <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>
                                 </td>

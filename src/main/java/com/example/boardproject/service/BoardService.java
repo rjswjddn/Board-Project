@@ -10,6 +10,7 @@ import com.example.boardproject.repository.BoardRepository;
 import com.example.boardproject.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class BoardService {
-//    @Value("${upload.directory}")
+    @Value("${upload.directory}")
     private String uploadDirectory;
 
     private final BoardRepository boardRepository;

@@ -53,8 +53,8 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
 
     BoardEntity findByBoardSeq(Long boardSeq);
 
-    @Query(value = "UPDATE board SET board_status = 0", nativeQuery = true)
-    void deleteByBoardSeq(Long boardSeq);
+    @Query(value = "UPDATE board SET board_status = true WHERE board_seq = :boardSeq", nativeQuery = true)
+    void deleteByBoardSeq(@Param("boardSeq") Long boardSeq);
 
 }
 
