@@ -2,8 +2,7 @@ package com.example.boardproject.dto;
 
 import com.example.boardproject.entity.BoardEntity;
 import com.example.boardproject.entity.BoardType;
-import jakarta.persistence.Transient;
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,11 +11,11 @@ import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Builder
 public class BoardResponseDto {
     private Long boardSeq;
     private String boardTitle;
+    @Size(max = 2000, message = "내용은 최대 2000 byte까지 입력할 수 있습니다.")
     private String boardContent;
     private String boardType;
     private int commentCnt;
@@ -29,8 +28,6 @@ public class BoardResponseDto {
     private Long userSeq;
     private String userId;
 
-    @Transient
-    private boolean isNew;
 
     public BoardResponseDto(Long boardSeq, String boardTitle, String boardContent, String boardType, int commentCnt, int viewCnt, int likeCnt, boolean imageYn, boolean boardStatus,
                             LocalDateTime boardCreatedDate, LocalDateTime boardUpdatedDate, Long userSeq, String userId) {
@@ -56,12 +53,6 @@ public class BoardResponseDto {
     public void setBoardTypeEnum(BoardType boardType) {
         this.boardType = boardType.name();
     }
-
-    public void setIsNew(boolean isNew) {
-        this.isNew = isNew;
-    }
-
-
 
     public BoardResponseDto(BoardEntity boardEntity) {
         this.boardSeq = boardEntity.getBoardSeq();

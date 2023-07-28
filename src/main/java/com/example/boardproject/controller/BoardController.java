@@ -10,7 +10,9 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,12 +22,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Controller
@@ -41,39 +41,31 @@ public class BoardController {
                         Model model, HttpSession httpSession) {
 
         // 로그인한 사용자의 아이디 가져오기
-        String loggedInUserId = (String) httpSession.getAttribute("userId");
-        if (loggedInUserId == null) {
+        String userId = (String) httpSession.getAttribute("userId");
+        if (userId == null) {
             return "redirect:/login";
         }
 
         // 사용자의 user_admin 값에 따라서 Thymeleaf 템플릿에 전달할 값을 설정
-        boolean isAdmin = userService.getUserAdminByUserId(loggedInUserId) == 1;
+        boolean isAdmin = userService.getUserAdminByUserId(userId) == 1;
         model.addAttribute("isAdmin", isAdmin);
 
         Pageable pageable = PageRequest.of(page, 10);
-        List<BoardResponseDto> noticeBoards = boardService.getNoticeBoardsWithUsers();
         Page<BoardResponseDto> normalBoards = boardService.getAllNormalBoardsWithUsers(pageable);
 
-        // 공지글 최대 5개
-        int maxNoticeCount = 5;
-        if (noticeBoards.size() > maxNoticeCount) {
-            noticeBoards = noticeBoards.subList(0, maxNoticeCount);
-        }
-
-        // 첫페이지 공지글과 일반글 합쳐서 모델에 추가
+        // 첫 페이지는 공지글과 일반글 합쳐서 모델에 추가
         List<BoardResponseDto> allBoards = new ArrayList<>();
         if (page == 0) {
+            List<BoardResponseDto> noticeBoards = boardService.getNoticeBoardsWithUsers();
             allBoards.addAll(noticeBoards);
         }
         allBoards.addAll(normalBoards.getContent());
 
-        for (BoardResponseDto board: allBoards) {
-        log.info(board.toString());
-        }
-
         model.addAttribute("Boards", allBoards);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", normalBoards.getTotalPages());
+        model.addAttribute("isSearch", false);
+
         return "board_list";
     }
 
@@ -88,11 +80,13 @@ public class BoardController {
 
         model.addAttribute("Boards", searchResult.getContent());
         model.addAttribute("currentPage", page);
+        model.addAttribute("searchType", searchType);
+        model.addAttribute("keyword", keyword);
         model.addAttribute("totalPages", searchResult.getTotalPages());
+        model.addAttribute("isSearch", true);
+
         return "board_list";
     }
-
-
 
 
     //게시물 작성 페이지
@@ -105,14 +99,18 @@ public class BoardController {
             return "redirect:/login";
         }
 
+        // 세션에서 관리자 여부 가져오기
+        int isAdmin = (int) httpSession.getAttribute("admin");
+
         // 사용자의 user_admin 값에 따라서 Thymeleaf 템플릿에 전달할 값을 설정
-        boolean isAdmin = userService.getUserAdminByUserId(loggedInUserId) == 1;
+//        boolean isAdmin = userService.getUserAdminByUserId(loggedInUserId) == 1;
         model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("userId", loggedInUserId);
 
         BoardRequestDto boardRequestDto = new BoardRequestDto();
-        boardRequestDto.setUserId(loggedInUserId); // 작성 페이지에 로그인한 사용자의 아이디 자동 설정
-
+        boardRequestDto.setUserId(loggedInUserId);
         model.addAttribute("boardRequestDto", boardRequestDto);
+
         return "board_register";
     }
 
@@ -121,8 +119,9 @@ public class BoardController {
     public String registerBoard(@Valid @ModelAttribute("boardRequestDto") BoardRequestDto boardRequestDto,
                                 @RequestParam("boardTypeInput") String boardType,
                                 @RequestParam("image") MultipartFile file,
+                                BindingResult bindingResult,
                                 HttpServletRequest httpServletRequest,
-                                BindingResult bindingResult) {
+                                RedirectAttributes redirectAttributes) {
         try {
             boardService.validateBoardRequest(boardRequestDto, bindingResult);
             if (bindingResult.hasErrors()) {
@@ -139,26 +138,34 @@ public class BoardController {
                 String userId = (String) session.getAttribute("userId");
                 Long userSeq = userService.findUserSeqByUserId(userId); // userId로 userSeq를 찾아옴
                 boardRequestDto.setUserId(userId);
-                boardRequestDto.setUserSeq(userSeq); // boardRequestDto에 userSeq 설정
+                boardRequestDto.setUserSeq(userSeq);
             }
 
-            // 백엔드에서의 요청된 userId와 세션에 저장된 userId 일치 여부 확인
-//            String loggedInUserId = (String) session.getAttribute("userId");
-//            if (!loggedInUserId.equals(boardRequestDto.getUserId())) {
-//                // 요청된 userId와 로그인한 사용자의 userId가 일치하지 않는 경우 요청 거부
-//                log.error("Unauthorized request for userId: " + boardRequestDto.getUserId());
-//                return "redirect:/500";
-//            }
-
-            log.info("전달 dto {}", boardRequestDto);
+            log.info("게시글 작성 요청: {}", boardRequestDto);
             boardRequestDto.setBoardType(boardType);
+
+            // 요청받은 boardType이 "N"인 경우 관리자 여부를 확인
+            if ("N".equals(boardType) && session != null) {
+                int isAdmin = (int) session.getAttribute("admin");
+                if (isAdmin != 1) {
+                    String userId = (String) session.getAttribute("userId");
+                    log.error("관리자가 아닌 사용자 (" + userId + ")가 공지글을 작성하려고 시도했습니다.");
+                    redirectAttributes.addFlashAttribute("errorMessage", "관리자만 공지글을 작성할 수 있습니다.");
+                    return "redirect:/board/register";
+                }
+            }
             boardService.registerBoard(boardRequestDto, file);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error occurred during board registration: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/board/register";
         }
         return "redirect:/board";
     }
+
+
+
 
 
     @GetMapping("board_view")

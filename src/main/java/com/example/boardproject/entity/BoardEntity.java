@@ -55,7 +55,4 @@ public class BoardEntity {
     @Column(name = "user_seq")
     private Long userSeq;
 
-    @Transient
-    private boolean isNew;
-
 }

@@ -98,6 +98,7 @@ public class UserController {
                 HttpSession session = httpServletRequest.getSession(true);
                 // 세션에 userId를 넣어줌
                 session.setAttribute("userId", userDto.getUserId());
+                session.setAttribute("admin", userDto.getUserAdmin());
                 return "redirect:/board";
 
             case ID_NULL:
