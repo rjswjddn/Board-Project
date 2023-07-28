@@ -24,12 +24,11 @@
                 <h1 class="mt-4">Board</h1>
                 <div class="card mb-4">
                     <div class="card-body">
-                        <form th:action="@{/board/register}" th:object="${boardRequestDto}" method="post" enctype="multipart/form-data" accept-charset="UTF-8">
+                        <form th:action="@{/board/register}" th:object="${boardRequestDto}" method="post" enctype="multipart/form-data" accept-charset="UTF-8" >
 
                             <div class="mb-3">
                                 <label for="boardType" class="form-label">게시글 종류 선택</label>
-                                <select name="boardTypeInput" id="boardType" class="form-select form-select-sm"
-                                        title="게시글 종류 선택">
+                                <select name="boardTypeInput" id="boardType" class="form-select form-select-sm" title="게시글 종류 선택" >
                                     <option value="G">일반글</option>
                                     <option th:if="${isAdmin}" value="N">공지글</option>
                                     <option th:unless="${isAdmin}" value="S">비밀글</option>
@@ -38,80 +37,153 @@
 
                             <div class="mb-3 mt-3">
                                 <label for="title" class="form-label">제목</label>
-                                <input th:field="*{boardTitle}"
-                                       type="text" class="form-control" id="title" onblur="validateTitle(this)">
+                                <input th:field="*{boardTitle}" type="text" class="form-control" id="title" onblur="validateTitleForm(this)" onkeydown="preventFormSubmit(event)">
                                 <div id="titleError" class="text-danger"></div>
                             </div>
 
-                            <!-- 로그인한 사용자의 아이디 표시 -->
                             <div class="mb-3">
                                 <label for="userId" class="form-label">작성자</label>
-                                <span th:text="*{userId}" class="form-control" id="userId"></span>
+                                <span th:text="${userId}" class="form-control" id="userId"></span>
                             </div>
 
                             <div class="mb-3">
                                 <label for="content" class="form-label">내용</label>
-                                <input th:field="*{boardContent}"
-                                       type="text" class="form-control" id="content" onblur="validateContent(this)">
+                                <textarea th:field="*{boardContent}" class="form-control" id="content" onblur="validateContentForm(this)" oninput="updateByteCount()" style="height: 300px;"></textarea>
+                                <div id="byteCount" class="text-secondary">0 / 2000 bytes</div>
                                 <div id="contentError" class="text-danger"></div>
+<!--                                <div th:if="${#fields.hasErrors('boardContent')}" th:errors="*{boardContent}" class="text-danger"></div>-->
                             </div>
 
                             <div class="mb-3">
                                 <label for="image" class="form-label">이미지 첨부</label>
-                                <input type="file" class="form-control" id="image" name="image"
-                                       onchange="previewImage(this)">
+                                <input type="file" class="form-control" id="image" name="image" onchange="previewImage(this)">
                             </div>
 
-                            <!-- 이미지 미리보기를 보여줄 요소 -->
                             <div id="imagePreview" style="display: none;">
-                                <img id="previewImg" src="#" alt="Image Preview"
-                                     style="max-width: 200px; max-height: 200px;">
+                                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                                    <img id="previewImg" src="#" alt="Image Preview" style="max-width: 200px; max-height: 200px;">
+                                    <button class="btn btn-danger btn-sm" onclick="removeImage()">삭제</button>
+                                </div>
                             </div>
+
+<!--                            <script>-->
+<!--                                // 이미지 첨부 에러메시지-->
+<!--                                var errorMessage = "[[${errorMessage}]]";-->
+<!--                                if (errorMessage) {-->
+<!--                                    alert(errorMessage);-->
+<!--                                }-->
+<!--                            </script>-->
 
                             <script>
-                                function validateTitle(input) {
-                                    var title = input.value;
-                                    var errorSpan = $("#titleError");
-                                    errorSpan.html("");
+
+                                //유효성 검사
+                                function validateTitleForm() {
+                                    var title = document.getElementById('title').value;
+                                    var titleError = document.getElementById('titleError');
+
+                                    // 에러 메시지 초기화
+                                    titleError.innerHTML = "";
 
                                     if (title.trim() === '') {
-                                        errorSpan.html("제목을 입력하세요.");
+                                        titleError.innerHTML = "제목을 입력해주세요.";
+                                        return false;
                                     }
-                                };
 
-                                function validateContent(input) {
-                                    var content = input.value;
-                                    var errorSpan = $("#contentError");
-                                    errorSpan.html("");
-
-                                    if (content.trim() === '') {
-                                        errorSpan.html("내용을 입력하세요.");
-                                    }
+                                    return true;
                                 }
 
-                                function previewImage(input) {
-                                    var imagePreview = document.getElementById('imagePreview');
-                                    var previewImg = document.getElementById('previewImg');
+                                function validateContentForm() {
+                                    var content = document.getElementById('content').value;
+                                    var contentError = document.getElementById('contentError');
+                                    var byteCount = new Blob([content]).size; // Get the byte count of the content
 
+                                    // 에러 메시지 초기화
+                                    contentError.innerHTML = "";
+
+                                    if (content.trim() === '') {
+                                        contentError.innerHTML = "내용을 입력해주세요.";
+                                        return false;
+                                    }
+
+                                    if (byteCount > 2000) {
+                                        contentError.innerHTML = "내용은 최대 2000byte까지 입력 가능합니다.";
+                                        return false;
+                                    }
+
+                                    return true;
+                                }
+
+                                function updateSubmitButtonState() {
+                                    var title = document.getElementById('title').value;
+                                    var content = document.getElementById('content').value;
+
+                                    var isTitleValid = title.trim() !== '';
+                                    var isContentValid = content.trim() !== '' && new Blob([content]).size <= 2000;
+
+                                    // 글작성 버튼 상태 업데이트
+                                    var submitButton = document.getElementById('submitButton');
+                                    submitButton.disabled = !(isTitleValid && isContentValid);
+                                }
+
+
+                                // 글자 수 세기
+                                function updateByteCount() {
+                                    var textarea = document.getElementById('content');
+                                    var byteCount = document.getElementById('byteCount');
+
+                                    // 입력된 내용을 UTF-8로 인코딩한 후, byte 수를 계산
+                                    var byteLength = new Blob([textarea.value], {type: 'text/plain; charset=utf-8'}).size;
+
+                                    // byte 수를 화면에 업데이트
+                                    byteCount.innerHTML = byteLength + " / 2000 bytes";
+
+                                }
+
+                                document.getElementById('title').addEventListener('input', updateSubmitButtonState);
+                                document.getElementById('content').addEventListener('input', function () {
+                                    updateByteCount();
+                                    updateSubmitButtonState();
+                                });
+
+                                // 이미지 첨부시 미리보기
+                                function previewImage(input) {
                                     if (input.files && input.files[0]) {
                                         var reader = new FileReader();
 
                                         reader.onload = function (e) {
-                                            previewImg.setAttribute('src', e.target.result);
-                                            imagePreview.style.display = 'block';
-                                        };
+                                            document.getElementById('previewImg').setAttribute('src', e.target.result);
+                                            document.getElementById('imagePreview').style.display = 'block';
+                                        }
 
                                         reader.readAsDataURL(input.files[0]);
-                                    } else {
-                                        previewImg.setAttribute('src', '');
-                                        imagePreview.style.display = 'none';
                                     }
                                 }
+
+                                // 첨부한 이미지 삭제
+                                function removeImage() {
+                                    document.getElementById('image').value = ''; // 파일 선택을 초기화
+                                    document.getElementById('previewImg').setAttribute('src', '');
+                                    document.getElementById('imagePreview').style.display = 'none';
+                                }
+
+                                // 이미지 첨부 에러메시지
+                                var errorMessage = "[[${errorMessage}]]";
+                                if (errorMessage) {
+                                    alert(errorMessage);
+                                }
+
+                                // 엔터 키를 눌렀을 때 폼 제출 방지
+                                function preventFormSubmit(event) {
+                                    if (event.keyCode === 13) {
+                                        event.preventDefault();
+                                    }
+                                }
+
                             </script>
 
                             <div style="margin-top: 20px;">
                                 <a th:href="@{/board}" class="btn btn-outline-secondary">뒤로</a>
-                                <button class="btn btn-outline-primary">글 작성</button>
+                                <button id="submitButton" class="btn btn-primary" th:disabled="true" >글 작성</button>
                             </div>
 
                         </form>
@@ -123,12 +195,9 @@
     </div>
 </div>
 
-<!--        추가해야 드롭다운 가능-->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
-        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="/js/scripts.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"
-        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
 <script src="/js/datatables-simple-demo.js"></script>
 
 </body>
