@@ -74,35 +74,32 @@
                                     <span th:if="${T(java.time.LocalDateTime).now().minusHours(24).isBefore(board.boardCreatedDate)}">
                                         <i class="fas fa-bell"></i>
                                     </span>
-
-
-<!--ver. 1 (기존)-->
-<!--                                    <span th:if="${board.getBoardTypeEnum().getIconClass() != null}">-->
-<!--                                        <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>-->
-<!--                                    </span>-->
-<!--                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">-->
-<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
-<!--                                    </span>-->
-<!--                                    <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
-<!--                                    <span th:if="${board.commentCnt > 0}" th:text="' [' + ${board.commentCnt} + ']'"></span>-->
-<!--                                    <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>-->
-
-
-<!--ver. 2 (비밀글입니다. but 접근 불가)-->
-                                    <span th:if="${board.getBoardTypeEnum() == T(com.example.boardproject.entity.BoardType).S}">
-                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>
-                                    </span>
-                                    <span th:else-if="${board.getBoardTypeEnum().getIconClass() != null}">
+                                    <span th:if="${board.getBoardTypeEnum().getIconClass() != null}">
                                         <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>
                                     </span>
                                     <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">
                                         <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>
                                     </span>
-                                    <span th:if="${board.getBoardTypeEnum() != T(com.example.boardproject.entity.BoardType).S}">
-                                        <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
-                                        <span th:text="${board.commentCnt > 0} ? '[' + ${board.commentCnt} + ']' : ''"></span>
-                                        <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>
-                                    </span>
+                                    <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
+                                    <span th:if="${board.commentCnt > 0}" th:text="' [' + ${board.commentCnt} + ']'"></span>
+                                    <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>
+
+
+<!--ver. 2 (비밀글입니다. but 접근 불가)-->
+<!--                                    <span th:if="${board.getBoardTypeEnum() == T(com.example.boardproject.entity.BoardType).S}">-->
+<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
+<!--                                    </span>-->
+<!--                                    <span th:else-if="${board.getBoardTypeEnum().getIconClass() != null}">-->
+<!--                                        <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>-->
+<!--                                    </span>-->
+<!--                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">-->
+<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
+<!--                                    </span>-->
+<!--                                    <span th:if="${board.getBoardTypeEnum() != T(com.example.boardproject.entity.BoardType).S}">-->
+<!--                                        <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
+<!--                                        <span th:text="${board.commentCnt > 0} ? '[' + ${board.commentCnt} + ']' : ''"></span>-->
+<!--                                        <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>-->
+<!--                                    </span>-->
 
 
 <!--ver. 3 (개발중)-->
