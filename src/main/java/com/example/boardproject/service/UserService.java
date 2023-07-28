@@ -10,26 +10,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.validation.Errors;
-import org.springframework.validation.FieldError;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
 
-    // 회원가입 확인
-    public RegisterEnum checkRegister(RegisterDto registerDto) {
-        RegisterEnum registerEnum = RegisterEnum.PASS;
-        if (userRepository.existsByUserId(registerDto.getUserId())) {
-            registerEnum = RegisterEnum.ID_DUP;
-        }
-
-        return registerEnum;
-    }
 
     // 회원가입
     // 화면에서 RegisterDto(아이디, 비밀번호) 를 입력받아 UserEntity로 변환하여 저장
@@ -75,17 +61,9 @@ public class UserService {
         return userDto;
     }
 
-
-    public Map<String, String> registerHandler(Errors errors) {
-        Map<String, String> result = new HashMap<>();
-
-        for (FieldError error : errors.getFieldErrors()) {
-            String keyName = String.format("valid_%s", error.getField());
-            result.put(keyName, error.getDefaultMessage());
-        }
-
-
-        return result;
+    public boolean checkUserIdDuplication(String userId){
+        boolean userIdDuplication = userRepository.existsByUserId(userId);
+        return userIdDuplication;
     }
 
     public Long findUserSeqByUserId(String userId) {

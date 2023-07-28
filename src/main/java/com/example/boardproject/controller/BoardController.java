@@ -17,10 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -165,23 +162,30 @@ public class BoardController {
     }
 
 
-
-
-
-    @GetMapping("board_view")
-    public String viewBoard(@RequestParam("boardseq") Long boardSeq, Model model, HttpServletRequest httpServletRequest) {
+    @GetMapping("board/{boardSeq}")
+    public String viewBoard(@PathVariable("boardSeq") Long boardSeq, Model model, HttpServletRequest httpServletRequest) {
         BoardResponseDto boardResponseDto = boardService.findByBoardSeq(boardSeq);
 
         // 게시물 등록 유저 정보
-        UserDto userDto = userService.findByUserSeq(boardResponseDto.getUserSeq());
-        String boardUserId = userDto.getUserId();
+        UserDto boardUserDto = userService.findByUserSeq(boardResponseDto.getUserSeq());
+        String boardUserId = boardUserDto.getUserId();
 
         // 현재 로그인 중인 유저 정보
         HttpSession session = httpServletRequest.getSession();
         String loginId = (String) session.getAttribute("userId");
 
-        // 같으면 true 다르면 false
-        boolean boardAuth = loginId.equals(boardUserId);
+        // 현재 로그인 중인 유저 권한
+        int loginUserAdmin = (int) session.getAttribute("admin");
+
+        // 게시물 작성자와 로그인 유저가 같거나 관리자 유저이면 true 다르면 false
+        boolean boardAuth = loginId.equals(boardUserId) || (loginUserAdmin == 1);
+
+        if(boardResponseDto.getBoardTypeEnum().equals("[비밀]") && !boardAuth){
+            model.addAttribute("message", "접근 권한이 없습니다.");
+            model.addAttribute("url", "/board_list");
+            return "/alert";
+        }
+
 
         model.addAttribute("boardResponseDto", boardResponseDto);
         model.addAttribute("boardUserId", boardUserId);
@@ -190,14 +194,9 @@ public class BoardController {
     }
 
     // 게시물 삭제
-    @GetMapping("board/delete")
-    public String deleteBoard(Model model, @RequestParam("boardseq") Long boardSeq, @RequestParam("boarduserid") String boardUserId, HttpServletRequest httpServletRequest) {
-        // 로그인 유저와 게시물 유저가 같은지 확인
-        HttpSession session = httpServletRequest.getSession();
-        if (!session.getAttribute("userId").equals(boardUserId)) {
-            return "board_list";
-        }
-
+    @DeleteMapping("boards/{boardSeq}")
+    public String deleteBoard(Model model, @PathVariable("boardSeq") Long boardSeq) {
+        log.info("delete board", boardSeq);
         boardService.deleteBoard(boardSeq);
 
         model.addAttribute("message", "게시글이 삭제 되었습니다.");
@@ -206,28 +205,26 @@ public class BoardController {
     }
 
     // 게시물 업데이트 페이지 이동
-    @GetMapping("board/update")
-    public String updateBoardPage(Model model, @RequestParam("boardseq") Long boardSeq, @RequestParam("boarduserid") String boardUserId, HttpServletRequest httpServletRequest) {
-        // 로그인 유저와 게시물 유저가 같은지 확인
-        HttpSession session = httpServletRequest.getSession();
-        if (!session.getAttribute("userId").equals(boardUserId)) {
-            return "board_list";
-        }
+    @GetMapping("board/edit/{boardSeq}")
+    public String updateBoardPage(Model model, @PathVariable("boardSeq") Long boardSeq) {
 
 
         BoardResponseDto boardResponseDto = boardService.findByBoardSeq(boardSeq);
+        UserDto userDto = userService.findByUserSeq(boardResponseDto.getUserSeq());
+        String boardUserId = userDto.getUserId();
+
         model.addAttribute("boardResponseDto", boardResponseDto);
         model.addAttribute("boardUserId", boardUserId);
         return "board_update";
     }
 
     // 게시물 업데이트 적용
-    @PostMapping("board/update")
-    public String updateBoard(@RequestParam("boardseq") Long boardSeq, @ModelAttribute("boardResponseDto") BoardResponseDto boardResponseDto) {
+    @PutMapping("board/{boardSeq}")
+    public String updateBoard(@PathVariable("boardSeq") Long boardSeq, @ModelAttribute("boardResponseDto") BoardResponseDto boardResponseDto) {
         BoardRequestDto boardRequestDto = new BoardRequestDto(boardResponseDto);
         boardService.updateBoard(boardSeq, boardRequestDto);
 
-        return "redirect:/board_view?boardseq=" + boardSeq;
+        return "redirect:/board/" + boardSeq;
     }
 
 

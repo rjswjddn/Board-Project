@@ -51,13 +51,16 @@
               </div>
 
 
-              <a th:href="@{board}" class="btn btn-outline-secondary">뒤로</a>
-              <a th:if="${boardAuth}" th:href="@{/board/delete(boardseq=${boardResponseDto.boardSeq},boarduserid=${boardUserId})}"class="btn btn-outline-primary">삭제</a>
-              <a th:if="${boardAuth}" th:href="@{/board/update(boardseq=${boardResponseDto.boardSeq},boarduserid=${boardUserId})}"class="btn btn-outline-primary">수정</a>
-
-
-
             </form>
+            <div >
+              <a th:href="@{/board}" class="btn btn-outline-secondary">뒤로</a>
+              <form th:if="${boardAuth}" th:method="DELETE" th:action="@{/boards/{boardSeq}(boardSeq = ${boardResponseDto.boardSeq})}" class="d-inline">
+                  <button class="btn btn-outline-primary">삭제</button>
+              </form>
+              <form th:if="${boardAuth}" th:method="GET" th:action="@{/board/edit/{boardSeq}(boardSeq = ${boardResponseDto.boardSeq})}" class="d-inline">
+                <button class="btn btn-outline-primary">수정</button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
