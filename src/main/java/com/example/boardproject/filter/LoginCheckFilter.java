@@ -23,12 +23,14 @@ public class LoginCheckFilter implements Filter {
 
         HttpSession session = httpServletRequest.getSession(false);
 
+
         if (!PatternMatchUtils.simpleMatch(whiteList, requestURI)) {
             if (session == null) {
                 httpServletResponse.sendRedirect("/login");
                 return;
             }
         }
+
         chain.doFilter(servletRequest, servletResponse);
     }
 }

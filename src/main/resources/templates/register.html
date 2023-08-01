@@ -36,16 +36,16 @@
                                             <div class="row mb-3">
                                                 <div class="col-md-6">
                                                     <div class="form-floating mb-3 mb-md-0">
-                                                        <input th:field="*{userId}" class="form-control" id="inputID" type="text" placeholder="ID" />
+                                                        <input th:field="*{userId}" class="form-control" id="inputID" type="text" placeholder="ID"/>
                                                         <label for="inputID">ID</label>
-                                                        <div class="error-class" th:if="${valid_userId}" th:text="${valid_userId}"></div>
+                                                        <p th:if="${#fields.hasErrors('userId')}" th:errors="*{userId}"></p>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="form-floating mb-3 mb-md-0">
                                                         <input th:field="*{userPwd}" class="form-control" id="inputPassword" type="password" placeholder="Create a password" />
                                                         <label for="inputPassword">Password</label>
-                                                        <span th:if="${valid_userPwd}" th:text="${valid_userPwd}"></span>
+                                                        <p th:if="${#fields.hasErrors('userPwd')}" th:errors="*{userPwd}"></span>
                                                     </div>
                                                 </div>
                                             </div>

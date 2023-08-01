@@ -17,14 +17,15 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
     //공지 게시물 + userId
     @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
-            "WHERE b.boardType = 'N' " +
-            "ORDER BY b.boardSeq DESC")
+            "WHERE b.boardType = 'N' AND b.boardStatus = false " +
+            "ORDER BY b.boardSeq DESC " +
+            "LIMIT 5")
     List<BoardResponseDto> findNoticeBoardsWithUsers();
 
     //공지 아닌 게시물 + userId
     @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
-            "WHERE b.boardType != 'N' " +
+            "WHERE b.boardType != 'N' AND b.boardStatus = false " +
             "ORDER BY b.boardSeq DESC")
     Page<BoardResponseDto> findNormalBoardsWithUsers(Pageable pageable);
 
@@ -53,8 +54,8 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
 
     BoardEntity findByBoardSeq(Long boardSeq);
 
-    @Query(value = "UPDATE board SET board_status = 0", nativeQuery = true)
-    void deleteByBoardSeq(Long boardSeq);
+    @Query(value = "UPDATE board SET board_status = true WHERE board_seq = :boardSeq", nativeQuery = true)
+    void deleteByBoardSeq(@Param("boardSeq") Long boardSeq);
 
 }
 

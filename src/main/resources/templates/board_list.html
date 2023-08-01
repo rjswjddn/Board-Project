@@ -42,9 +42,12 @@
                                 <div class="col-auto">
                                     <input type="text" name="keyword" class="form-control form-control-sm" placeholder="내용을 입력해 주세요." title="내용 입력" />
                                 </div>
+
+
                                 <div class="col-auto">
                                     <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i><span class="skip_info">검색</span></button>
                                 </div>
+
                             </div>
                             <a class="btn btn-primary btn-sm ms-auto" href="board/register"><i class="fas fa-edit"></i> 글 작성</a>
                         </form>
@@ -68,8 +71,8 @@
                                 <td th:text="${board.boardSeq}"></td>
                                 <td>
                                     <!-- 신규 등록 아이콘 표시 -->
-                                    <span th:if="${board.isNew}">
-                                        <i class="fas fa-star"></i>
+                                    <span th:if="${T(java.time.LocalDateTime).now().minusHours(24).isBefore(board.boardCreatedDate)}">
+                                        <i class="fas fa-bell"></i>
                                     </span>
                                     <span th:if="${board.getBoardTypeEnum().getIconClass() != null}">
                                         <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>
@@ -77,9 +80,50 @@
                                     <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">
                                         <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>
                                     </span>
-                                    <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
+                                    <a th:method="get" th:href="@{/board/{boardSeq}(boardSeq = ${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
                                     <span th:if="${board.commentCnt > 0}" th:text="' [' + ${board.commentCnt} + ']'"></span>
                                     <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>
+
+
+<!--ver. 2 (비밀글입니다. but 접근 불가)-->
+<!--                                    <span th:if="${board.getBoardTypeEnum() == T(com.example.boardproject.entity.BoardType).S}">-->
+<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
+<!--                                    </span>-->
+<!--                                    <span th:else-if="${board.getBoardTypeEnum().getIconClass() != null}">-->
+<!--                                        <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>-->
+<!--                                    </span>-->
+<!--                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">-->
+<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
+<!--                                    </span>-->
+<!--                                    <span th:if="${board.getBoardTypeEnum() != T(com.example.boardproject.entity.BoardType).S}">-->
+<!--                                        <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
+<!--                                        <span th:text="${board.commentCnt > 0} ? '[' + ${board.commentCnt} + ']' : ''"></span>-->
+<!--                                        <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>-->
+<!--                                    </span>-->
+
+
+<!--ver. 3 (개발중)-->
+<!--                                    <span th:if="${board.getBoardTypeEnum() == T(com.example.boardproject.entity.BoardType).S}">-->
+<!--                                        <span th:if="${board.userId == #session.getAttribute('userId')}">-->
+<!--                                            <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
+<!--                                        </span>-->
+<!--                                        <span th:unless="${board.userId == #session.getAttribute('userId')}">-->
+<!--                                            <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
+<!--                                        </span>-->
+<!--                                    </span>-->
+<!--                                    <span th:else-if="${board.getBoardTypeEnum().getIconClass() != null}">-->
+<!--                                        <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>-->
+<!--                                    </span>-->
+<!--                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">-->
+<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
+<!--                                    </span>-->
+<!--                                    <span th:if="${board.getBoardTypeEnum() != T(com.example.boardproject.entity.BoardType).S}">-->
+<!--                                        <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
+<!--                                        <span th:text="${board.commentCnt > 0} ? '[' + ${board.commentCnt} + ']' : ''"></span>-->
+<!--                                        <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>-->
+<!--                                    </span>-->
+
+
                                 </td>
                                 <td th:text="${board.userId}"></td>
                                 <td th:text="${#temporals.format(board.boardCreatedDate, 'yyyy-MM-dd HH:mm' )}"></td>
@@ -90,17 +134,15 @@
                         </table>
                     </div>
                 </div>
-
                 <div>
-
-                    <ul class="pagination justify-content-center">
+                    <ul class="pagination justify-content-center" th:if="${!isSearch}">
                         <li class="page-item">
                             <a th:href="@{/board(page=0)}" class="page-link">처음</a>
                         </li>
 
                         <!-- 이전 5개의 페이지로 이동하는 링크 -->
                         <li th:classappend="${currentPage < 5}?'disabled'" class="page-item">
-                            <a  th:href="@{/board(page=${(currentPage / 5 * 5) - 5})}" class="page-link">&laquo;</a>
+                            <a th:href="@{/board(page=${(currentPage / 5 * 5) - 5})}" class="page-link">&laquo;</a>
                         </li>
 
                         <!-- 페이지 번호 표시 -->
@@ -116,7 +158,30 @@
                         <li class="page-item">
                             <a th:href="@{/board(page=${totalPages - 1})}" class="page-link">끝</a>
                         </li>
+                    </ul>
 
+                    <ul class="pagination justify-content-center" th:if="${isSearch}">
+                        <li class="page-item">
+                            <a th:href="@{/search(page=0, searchType=${searchType}, keyword=${keyword})}" class="page-link">처음</a>
+                        </li>
+
+                        <!-- 이전 5개의 페이지로 이동하는 링크 -->
+                        <li th:classappend="${currentPage < 5}?'disabled'" class="page-item">
+                            <a th:href="@{/search(page=${(currentPage / 5 * 5) - 5}, searchType=${searchType}, keyword=${keyword})}" class="page-link">&laquo;</a>
+                        </li>
+
+                        <!-- 페이지 번호 표시 -->
+                        <li th:each="pageNum : ${#numbers.sequence(currentPage / 5 * 5, (currentPage / 5 * 5) + 4)}" class="page-item">
+                            <a th:if="${pageNum < totalPages}" th:href="@{/search(page=${pageNum}, searchType=${searchType}, keyword=${keyword})}" th:text="${pageNum + 1}" class="page-link"></a>
+                        </li>
+
+                        <li th:classappend="${(currentPage / 5 * 5) + 5 > totalPages}?'disabled'" class="page-item">
+                            <a th:href="@{/search(page=${(currentPage / 5 * 5) + 5}, searchType=${searchType}, keyword=${keyword})}" class="page-link">&raquo;</a>
+                        </li>
+
+                        <li class="page-item">
+                            <a th:href="@{/search(page=${totalPages - 1}, searchType=${searchType}, keyword=${keyword})}" class="page-link">끝</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -149,6 +214,7 @@
     //         $("#deleteIds").val(selectedIds.join(","));
     //     });
     // });
+
 
 </script>
 

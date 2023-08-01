@@ -11,6 +11,7 @@ import lombok.Setter;
 public class LoginDto {
 
     private String userId;
+
     private String userPwd;
 
 }
