@@ -65,6 +65,7 @@ public class UserController {
             return "/register";
         }
 
+        userService.register(registerDto);
         model.addAttribute("message", "회원가입에 성공했습니다.");
         model.addAttribute("url", "/login");
         return "alert";
@@ -105,6 +106,8 @@ public class UserController {
         // 세션에 userId를 넣어줌
         session.setAttribute("userId", userDto.getUserId());
         session.setAttribute("admin", userDto.getUserAdmin());
+        session.setAttribute("userSeq", userDto.getUserSeq());
+
         return "redirect:/board";
 
     }

@@ -1,9 +1,9 @@
 package com.example.boardproject.entity;
 
 public enum BoardType {
-    N("공지", "fas fa-bullhorn"), // N: NOTICE
-    G("[일반]", null), // G: GENERAL
-    S("비밀글입니다.", "fas fa-key"); // S: SECRET
+    N("공지글", "fa-solid fa-bullhorn fa-beat"), // N: NOTICE
+    G("일반글", null), // G: GENERAL
+    S("비밀글", "fa-solid fa-key fa-shake"); // S: SECRET
 
     private final String displayName;
     private final String iconClass;

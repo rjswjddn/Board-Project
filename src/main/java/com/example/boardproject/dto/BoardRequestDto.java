@@ -1,7 +1,6 @@
 package com.example.boardproject.dto;
 
 import com.example.boardproject.entity.BoardEntity;
-import jakarta.persistence.Column;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -54,6 +53,7 @@ public class BoardRequestDto {
     //INSERT
     public BoardEntity toEntity() {
         return BoardEntity.builder()
+                .boardSeq(this.boardSeq)
                 .boardTitle(this.boardTitle)
                 .boardContent(this.boardContent)
                 .boardType(this.boardType)

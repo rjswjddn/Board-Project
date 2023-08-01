@@ -2,7 +2,6 @@ package com.example.boardproject.dto;
 
 import com.example.boardproject.entity.BoardEntity;
 import com.example.boardproject.entity.BoardType;
-import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +14,6 @@ import java.time.LocalDateTime;
 public class BoardResponseDto {
     private Long boardSeq;
     private String boardTitle;
-    @Size(max = 2000, message = "내용은 최대 2000 byte까지 입력할 수 있습니다.")
     private String boardContent;
     private String boardType;
     private int commentCnt;

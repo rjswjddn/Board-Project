@@ -1,11 +1,14 @@
 package com.example.boardproject.service;
 
+import com.example.boardproject.Constants;
 import com.example.boardproject.dto.BoardRequestDto;
 import com.example.boardproject.dto.BoardResponseDto;
 import com.example.boardproject.entity.BoardEntity;
 import com.example.boardproject.entity.BoardImageEntity;
+import com.example.boardproject.entity.BoardLikeEntity;
 import com.example.boardproject.entity.UserEntity;
 import com.example.boardproject.repository.BoardImageRepository;
+import com.example.boardproject.repository.BoardLikeRepository;
 import com.example.boardproject.repository.BoardRepository;
 import com.example.boardproject.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +39,7 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
     private final BoardImageRepository boardImageRepository;
+    private final BoardLikeRepository boardLikeRepository;
 
     //공지글
     public List<BoardResponseDto> getNoticeBoardsWithUsers() {
@@ -86,7 +91,7 @@ public class BoardService {
     @Transactional
     public void registerBoard(BoardRequestDto boardRequestDto, MultipartFile file) throws IOException {
         BoardEntity boardEntity = boardRequestDto.toEntity();
-        log.info(boardEntity.toString());
+        boardRepository.save(boardEntity);
 
         // 이미지 파일 업로드 처리
         if (!file.isEmpty()) {
@@ -97,8 +102,9 @@ public class BoardService {
 
             // 파일 확장자 확인 (이미지 파일 여부 체크)
             String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-            boolean isAllowedExtension = isAllowedExtension(fileExtension);
+            boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
             if (!isAllowedExtension) {
+
                 throw new IOException("이미지 파일만 업로드 가능합니다.");
             }
 
@@ -119,31 +125,26 @@ public class BoardService {
 
             // board 테이블의 imageYn 속성을 true로 설정
             boardEntity.setImageYn(true);
-
         }
-        boardRepository.save(boardEntity);
+
     }
 
-    private boolean isAllowedExtension(String fileExtension) {
-        String[] allowedExtensions = {"jpg", "jpeg", "png", "gif"};
-        return Arrays.stream(allowedExtensions).anyMatch(extension -> extension.equals(fileExtension));
-    }
 
     public boolean isValidBoardTitle(String boardTitle) {
-        return boardTitle != null && !boardTitle.trim().isEmpty();
+        return StringUtils.hasText(boardTitle) && boardTitle.length() <= 45;
     }
 
     public boolean isValidContent(String boardContent) {
-        return boardContent != null && !boardContent.trim().isEmpty() && boardContent.length() <= 2000;
+        return StringUtils.hasText(boardContent) && boardContent.length() <= 2000;
     }
 
     // 유효성 검사
     public void validateBoardRequest(BoardRequestDto boardRequestDto, BindingResult bindingResult) {
         if (!isValidBoardTitle(boardRequestDto.getBoardTitle())) {
-            bindingResult.rejectValue("boardTitle", "empty.boardTitle", "제목 미입력");
+            bindingResult.rejectValue("boardTitle", "empty.boardTitle", "제목은 최소 1자에서 최대 45자까지 허용됩니다.");
         }
         if (!isValidContent(boardRequestDto.getBoardContent())) {
-            bindingResult.rejectValue("boardContent", "invalid.boardContent", "내용은 최소 1byte에서 최대 2000byte까지 허용됩니다.");
+            bindingResult.rejectValue("boardContent", "invalid.boardContent", "내용은 최소 1자에서 최대 2000자까지 허용됩니다.");
         }
     }
 
@@ -161,6 +162,7 @@ public class BoardService {
     // Seq로 게시물을 찾아 board_status를 0으로 변경
     public void deleteBoard(Long boardSeq) {
         boardRepository.deleteByBoardSeq(boardSeq);
+        boardLikeRepository.deleteAllByBoardSeq(boardSeq);
     }
 
     // 게시물 찾아 수정하고 저장
@@ -175,6 +177,38 @@ public class BoardService {
 
 
 
+    //좋아요 기능
+    @Transactional
+    public String toggleLike(Long boardSeq, Long userSeq) {
+        boolean alreadyLiked = boardLikeRepository.existsByBoardSeqAndUserSeq(boardSeq, userSeq);
+        BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
+
+        if (alreadyLiked) {
+            boardLikeRepository.deleteByBoardSeqAndUserSeq(boardSeq, userSeq);
+            boardEntity.setLikeCnt(boardEntity.getLikeCnt() - 1);
+        } else {
+            BoardLikeEntity boardLikeEntity = new BoardLikeEntity();
+            boardLikeEntity.setBoardSeq(boardSeq);
+            boardLikeEntity.setUserSeq(userSeq);
+            boardLikeRepository.save(boardLikeEntity);
+            boardEntity.setLikeCnt(boardEntity.getLikeCnt() + 1);
+        }
+
+        // 좋아요 추가 또는 취소 후 boardEntity의 like_cnt 값에 반영
+        boardRepository.save(boardEntity);
+
+        return alreadyLiked ? "disliked" : "liked";
+    }
+
+    // 사용자가 해당 게시글에 좋아요를 눌렀는지 확인하는 메서드
+    public boolean isLiked(Long boardSeq, Long userSeq) {
+        return boardLikeRepository.existsByBoardSeqAndUserSeq(boardSeq, userSeq);
+    }
+
+    //게시글별 좋아요 갯수 가져오기
+    public int getLikeCount(Long boardSeq) {
+        return boardLikeRepository.countByBoardSeq(boardSeq);
+    }
 
 
 
