@@ -103,7 +103,7 @@ public class UserController {
     // 로그인에 실패하면 실패 사유를 alert 창으로 나타냄
     // 성공하면 index 로 이동함
     @PostMapping("/login")
-    public ModelAndView login(Model model, @Valid @ModelAttribute("loginDto") LoginDto loginDto, Errors errors, HttpServletRequest httpServletRequest) {
+    public ModelAndView login( @Valid @ModelAttribute("loginDto") LoginDto loginDto, Errors errors, HttpServletRequest httpServletRequest) {
 
         ModelAndView mv = new ModelAndView();
 

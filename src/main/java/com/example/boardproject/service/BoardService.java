@@ -109,7 +109,7 @@ public class BoardService {
             }
 
             // 이미지 파일 저장 경로 설정
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename().replace("//", "");
             String imagePath = uploadDirectory + fileName;
             Path imageFilePath = Paths.get(imagePath);
 
@@ -185,7 +185,7 @@ public class BoardService {
 
                 // 파일 확장자 확인 (이미지 파일 여부 체크)
                 String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-                boolean isAllowedExtension = isAllowedExtension(fileExtension);
+                boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
                 if (!isAllowedExtension) {
                     throw new IOException("이미지 파일만 업로드 가능합니다.");
                 }
@@ -216,7 +216,7 @@ public class BoardService {
 
                 // 파일 확장자 확인 (이미지 파일 여부 체크)
                 String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-                boolean isAllowedExtension = isAllowedExtension(fileExtension);
+                boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
                 if (!isAllowedExtension) {
                     throw new IOException("이미지 파일만 업로드 가능합니다.");
                 }

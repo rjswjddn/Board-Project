@@ -54,10 +54,10 @@ public class UserService {
         return userRepository.getUserAdminByUserId(userId);
     }
 
-    public boolean isAdminUser(String userId) {
-        int userAdmin = getUserAdminByUserId(userId);
-        return userAdmin == 1;
-    }
+//    public boolean isAdminUser(String userId) {
+//        int userAdmin = getUserAdminByUserId(userId);
+//        return userAdmin == 1;
+//    }
 
 
 }

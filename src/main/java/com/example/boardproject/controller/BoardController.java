@@ -44,8 +44,8 @@ public class BoardController {
             return new ModelAndView("redirect:/login");
         }
 
-        boolean isAdmin = userService.isAdminUser(userId);
-
+//        boolean isAdmin = userService.isAdminUser(userId);
+        boolean isAdmin = (boolean) httpSession.getAttribute("admin");
         Pageable pageable = PageRequest.of(page, 10);
         Page<BoardResponseDto> normalBoards = boardService.getAllNormalBoardsWithUsers(pageable);
 
@@ -189,9 +189,9 @@ public class BoardController {
         }
 
         if (boardResponseDto.isImageYn()) {
-            String imagePath = boardService.getImagePathByBoardSeq(boardResponseDto.getBoardSeq()).substring(25);
-            log.info("imagePath = {}", imagePath);
-            model.addAttribute("imagePath", imagePath);
+            String imagePath = boardService.getImagePathByBoardSeq(boardResponseDto.getBoardSeq());
+            log.info("imagePath = {}", imagePath.substring(imagePath.lastIndexOf("/")));
+            model.addAttribute("imagePath", imagePath.substring(imagePath.lastIndexOf("/")));
         }
 
         boardService.updateViewCnt(boardResponseDto.getBoardSeq());
