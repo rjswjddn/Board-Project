@@ -37,7 +37,8 @@
 
                             <div class="mb-3 mt-3">
                                 <label for="title" class="form-label">제목</label>
-                                <input th:field="*{boardTitle}" type="text" class="form-control" id="title" onblur="validateTitleForm(this)" onkeydown="preventFormSubmit(event)">
+                                <input th:field="*{boardTitle}" type="text" class="form-control" id="title" onblur="validateTitleForm(this)" oninput="updateTitleCharacterCount()" onkeydown="preventFormSubmit(event)">
+                                <div id="titleCharacterCount" class="text-secondary">0 / 45자</div>
                                 <div id="titleError" class="text-danger"></div>
                             </div>
 
@@ -48,10 +49,9 @@
 
                             <div class="mb-3">
                                 <label for="content" class="form-label">내용</label>
-                                <textarea th:field="*{boardContent}" class="form-control" id="content" onblur="validateContentForm(this)" oninput="updateByteCount()" style="height: 300px;"></textarea>
-                                <div id="byteCount" class="text-secondary">0 / 2000 bytes</div>
+                                <textarea th:field="*{boardContent}" class="form-control" id="content" onblur="validateContentForm(this)" oninput="updateCharacterCount()" style="height: 300px;"></textarea>
+                                <div id="characterCount" class="text-secondary">0 / 2000자</div>
                                 <div id="contentError" class="text-danger"></div>
-<!--                                <div th:if="${#fields.hasErrors('boardContent')}" th:errors="*{boardContent}" class="text-danger"></div>-->
                             </div>
 
                             <div class="mb-3">
@@ -66,13 +66,6 @@
                                 </div>
                             </div>
 
-<!--                            <script>-->
-<!--                                // 이미지 첨부 에러메시지-->
-<!--                                var errorMessage = "[[${errorMessage}]]";-->
-<!--                                if (errorMessage) {-->
-<!--                                    alert(errorMessage);-->
-<!--                                }-->
-<!--                            </script>-->
 
                             <script>
 
@@ -89,13 +82,17 @@
                                         return false;
                                     }
 
+                                    if (title.length > 45) {
+                                        titleError.innerHTML = "제목은 최대 45자까지 입력 가능합니다."
+                                        return false;
+                                    }
+
                                     return true;
                                 }
 
                                 function validateContentForm() {
                                     var content = document.getElementById('content').value;
                                     var contentError = document.getElementById('contentError');
-                                    var byteCount = new Blob([content]).size; // Get the byte count of the content
 
                                     // 에러 메시지 초기화
                                     contentError.innerHTML = "";
@@ -105,8 +102,8 @@
                                         return false;
                                     }
 
-                                    if (byteCount > 2000) {
-                                        contentError.innerHTML = "내용은 최대 2000byte까지 입력 가능합니다.";
+                                    if (content.length > 2000) {
+                                        contentError.innerHTML = "내용은 최대 2000자까지 입력 가능합니다.";
                                         return false;
                                     }
 
@@ -117,8 +114,8 @@
                                     var title = document.getElementById('title').value;
                                     var content = document.getElementById('content').value;
 
-                                    var isTitleValid = title.trim() !== '';
-                                    var isContentValid = content.trim() !== '' && new Blob([content]).size <= 2000;
+                                    var isTitleValid = title.trim() !== '' && title.length <= 45;
+                                    var isContentValid = content.trim() !== '' && content.length <= 2000;
 
                                     // 글작성 버튼 상태 업데이트
                                     var submitButton = document.getElementById('submitButton');
@@ -127,21 +124,33 @@
 
 
                                 // 글자 수 세기
-                                function updateByteCount() {
+                                function updateTitleCharacterCount() {
+                                    var textarea = document.getElementById('title');
+                                    var titleCharacterCount = document.getElementById('titleCharacterCount');
+
+                                    // 입력된 내용의 글자 수를 계산
+                                    var text = textarea.value;
+                                    var characterLength = text.length;
+
+                                    // 글자 수를 화면에 업데이트
+                                    titleCharacterCount.innerHTML = characterLength + " / 45자";
+                                }
+
+                                function updateCharacterCount() {
                                     var textarea = document.getElementById('content');
-                                    var byteCount = document.getElementById('byteCount');
+                                    var characterCount = document.getElementById('characterCount');
 
-                                    // 입력된 내용을 UTF-8로 인코딩한 후, byte 수를 계산
-                                    var byteLength = new Blob([textarea.value], {type: 'text/plain; charset=utf-8'}).size;
+                                    // 입력된 내용의 글자 수를 계산
+                                    var text = textarea.value;
+                                    var characterLength = text.length;
 
-                                    // byte 수를 화면에 업데이트
-                                    byteCount.innerHTML = byteLength + " / 2000 bytes";
-
+                                    // 글자 수를 화면에 업데이트
+                                    characterCount.innerHTML = characterLength + " / 2000자";
                                 }
 
                                 document.getElementById('title').addEventListener('input', updateSubmitButtonState);
                                 document.getElementById('content').addEventListener('input', function () {
-                                    updateByteCount();
+                                    updateCharacterCount();
                                     updateSubmitButtonState();
                                 });
 

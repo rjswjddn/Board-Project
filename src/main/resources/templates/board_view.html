@@ -4,8 +4,8 @@
 <head th:replace="/fragment/header.html :: fragment-header">
   <title>Board - SB Admin</title>
 
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!--  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-o0D7S1b/EX5F7ICwNtPI4fp2owlal0llwFG+YI7BvEc=" crossorigin="anonymous"></script>-->
 
 </head>
 
@@ -24,7 +24,13 @@
         <h1 class="mt-4">Board</h1>
         <div class="card mb-4">
           <div class="card-body">
-            <form enctype="multipart/form-data" \>
+            <form enctype="multipart/form-data">
+
+              <div class="mb-3">
+                <label for="boardCreatedDate" class="form-label">작성일</label>
+                <div id="boardCreatedDate" class="form-control" th:text="${#temporals.format(boardResponseDto.boardCreatedDate, 'yyyy-MM-dd HH:mm' )}"></div>
+              </div>
+
               <div class="mb-3">
                 <label for="boardType" class="form-label">게시글 종류</label>
                 <div id="boardType" class="form-control" th:text="${boardResponseDto.getBoardTypeEnum().getDisplayName()}"></div>
@@ -49,10 +55,8 @@
                 <label for="image" class="form-label">Image</label>
                 <input type="file" class="form-control" id="image" name="image">
               </div>
-
-
             </form>
-            <div >
+            <div>
               <a th:href="@{/board}" class="btn btn-outline-secondary">뒤로</a>
               <form th:if="${boardAuth}" th:method="DELETE" th:action="@{/boards/{boardSeq}(boardSeq = ${boardResponseDto.boardSeq})}" class="d-inline">
                   <button class="btn btn-outline-primary">삭제</button>
@@ -60,14 +64,108 @@
               <form th:if="${boardAuth}" th:method="GET" th:action="@{/board/edit/{boardSeq}(boardSeq = ${boardResponseDto.boardSeq})}" class="d-inline">
                 <button class="btn btn-outline-primary">수정</button>
               </form>
+              <form id="likeForm" th:method="POST" th:action="@{/board/{boardSeq}(boardSeq = ${boardResponseDto.boardSeq})}" class="d-inline">
+                <button id="likeButton" class="btn btn-primary" type="button" th:style="'display: ' + (${liked} ? 'none' : 'inline-block')"><i class="fa fa-thumbs-up"></i>좋아요</button>
+                <button id="dislikeButton" class="btn btn-secondary" type="button" th:style="'display: ' + (${liked} ? 'inline-block' : 'none')"><i class="fa fa-thumbs-down"></i>좋아요 취소</button>
+              </form>
+              <span id="likeStatus" th:text="'좋아요 누른 사람 ' + ${likeCount} + '명'"></span>
             </div>
           </div>
         </div>
       </div>
     </main>
+
+    <!-- Comments Form -->
+    <div class="container-fluid px-4">
+      <div class="card mb-4">
+        <h5 class="card-header">Leave a Comment:</h5>
+        <div class="card-body">
+
+          <form>
+            <div class="form-group">
+              <input type="hidden" name="idx"/>
+              <textarea name="commentContent" class="form-control" rows="3"></textarea>
+            </div>
+            <br> <!-- 공백을 위해 <br> 요소를 추가 -->
+            <button type="submit" class="btn btn-primary">Send</button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
     <div th:replace="/fragment/footer.html :: fragment-footer"></div>
   </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function () {
+
+    // 좋아요 버튼 클릭 이벤트 핸들러
+    $("#likeButton").click(function () {
+      $.post($("#likeForm").attr("action"))
+              .done(function (data) {
+                console.log("AJAX 요청 성공!");
+                console.log("받은 데이터:", data);
+
+                // JSON 데이터로 파싱해서 result와 likeCount 값 추출
+                var result = data.result;
+                var likeCount = data.likeCount;
+
+                var likeButton = $("#likeButton");
+                var dislikeButton = $("#dislikeButton");
+                var likeStatus = $("#likeStatus");
+
+                // "disliked" 상태일 때 "좋아요" 버튼을 보여줌
+                if (result === "disliked") {
+                  likeButton.show();
+                  dislikeButton.hide();
+                }
+                // "liked" 상태일 때 "싫어요" 버튼을 보여줌
+                else if (result === "liked") {
+                  likeButton.hide();
+                  dislikeButton.show();
+                }
+
+                likeStatus.text("좋아요 누른 사람 " + likeCount + "명");
+              })
+              .fail(function () {
+                console.error("AJAX 요청 실패!");
+              });
+    });
+
+    // 좋아요 취소 버튼 클릭 이벤트 핸들러
+    $("#dislikeButton").click(function () {
+      $.post($("#likeForm").attr("action"))
+              .done(function (data) {
+                console.log("AJAX 요청 성공!");
+                console.log("받은 데이터:", data);
+
+                var result = data.result;
+                var likeCount = data.likeCount;
+
+                var likeButton = $("#likeButton");
+                var dislikeButton = $("#dislikeButton");
+                var likeStatus = $("#likeStatus");
+
+                if (result === "disliked") {
+                  likeButton.show();
+                  dislikeButton.hide();
+                }
+                else if (result === "liked") {
+                  likeButton.hide();
+                  dislikeButton.show();
+                }
+
+                likeStatus.text("좋아요 누른 사람 " + likeCount + "명");
+              })
+              .fail(function () {
+                console.error("AJAX 요청 실패!");
+              });
+    });
+  });
+</script>
 
 <!--        추가해야 드롭다운 가능-->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
