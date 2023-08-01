@@ -85,7 +85,7 @@
                                     <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>
 
 
-<!--ver. 2 (비밀글입니다. but 접근 불가)-->
+<!--&lt;!&ndash;ver. 2 (비밀글입니다. but 접근 불가)&ndash;&gt;-->
 <!--                                    <span th:if="${board.getBoardTypeEnum() == T(com.example.boardproject.entity.BoardType).S}">-->
 <!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
 <!--                                    </span>-->
@@ -96,7 +96,7 @@
 <!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
 <!--                                    </span>-->
 <!--                                    <span th:if="${board.getBoardTypeEnum() != T(com.example.boardproject.entity.BoardType).S}">-->
-<!--                                        <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
+<!--                                        <a th:href="@{/board/{boardSeq}(boardSeq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
 <!--                                        <span th:text="${board.commentCnt > 0} ? '[' + ${board.commentCnt} + ']' : ''"></span>-->
 <!--                                        <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>-->
 <!--                                    </span>-->
@@ -148,7 +148,7 @@
                         <!-- 페이지 번호 표시 -->
                         <li th:each="pageNum : ${#numbers.sequence(currentPage / 5 * 5, (currentPage / 5 * 5) + 4)}" class="page-item">
                             <a th:if="${pageNum < totalPages}" th:href="@{/board(page=${pageNum})}"
-                               th:text="${pageNum + 1}" class="page-link"></a>
+                               th:text="${pageNum + 1}" class="page-link" th:classappend="${currentPage==pageNum}?'disabled'"></a>
                         </li>
 
                         <li th:classappend="${(currentPage / 5 * 5) + 5 > totalPages}?'disabled'" class="page-item">

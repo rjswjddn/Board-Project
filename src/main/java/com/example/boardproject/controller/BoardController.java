@@ -3,6 +3,7 @@ package com.example.boardproject.controller;
 import com.example.boardproject.dto.BoardRequestDto;
 import com.example.boardproject.dto.BoardResponseDto;
 import com.example.boardproject.dto.UserDto;
+import com.example.boardproject.entity.BoardType;
 import com.example.boardproject.service.BoardService;
 import com.example.boardproject.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,7 +45,7 @@ public class BoardController {
         }
 
         // 사용자의 user_admin 값에 따라서 Thymeleaf 템플릿에 전달할 값을 설정
-        boolean isAdmin = userService.getUserAdminByUserId(userId) == 1;
+        boolean isAdmin = userService.getUserAdminByUserId(userId);
         model.addAttribute("isAdmin", isAdmin);
 
         Pageable pageable = PageRequest.of(page, 10);
@@ -97,7 +98,7 @@ public class BoardController {
         }
 
         // 세션에서 관리자 여부 가져오기
-        int isAdmin = (int) httpSession.getAttribute("admin");
+        boolean isAdmin = (boolean) httpSession.getAttribute("admin");
 
         // 사용자의 user_admin 값에 따라서 Thymeleaf 템플릿에 전달할 값을 설정
 //        boolean isAdmin = userService.getUserAdminByUserId(loggedInUserId) == 1;
@@ -119,6 +120,7 @@ public class BoardController {
                                 BindingResult bindingResult,
                                 HttpServletRequest httpServletRequest,
                                 RedirectAttributes redirectAttributes) {
+
         try {
             boardService.validateBoardRequest(boardRequestDto, bindingResult);
             if (bindingResult.hasErrors()) {
@@ -143,8 +145,8 @@ public class BoardController {
 
             // 요청받은 boardType이 "N"인 경우 관리자 여부를 확인
             if ("N".equals(boardType) && session != null) {
-                int isAdmin = (int) session.getAttribute("admin");
-                if (isAdmin != 1) {
+                boolean isAdmin = (boolean) session.getAttribute("admin");
+                if (isAdmin) {
                     String userId = (String) session.getAttribute("userId");
                     log.error("관리자가 아닌 사용자 (" + userId + ")가 공지글을 작성하려고 시도했습니다.");
                     redirectAttributes.addFlashAttribute("errorMessage", "관리자만 공지글을 작성할 수 있습니다.");
@@ -175,18 +177,24 @@ public class BoardController {
         String loginId = (String) session.getAttribute("userId");
 
         // 현재 로그인 중인 유저 권한
-        int loginUserAdmin = (int) session.getAttribute("admin");
+        boolean isAdmin = (boolean) session.getAttribute("admin");
 
         // 게시물 작성자와 로그인 유저가 같거나 관리자 유저이면 true 다르면 false
-        boolean boardAuth = loginId.equals(boardUserId) || (loginUserAdmin == 1);
+        boolean boardAuth = loginId.equals(boardUserId) || isAdmin;
 
-        if(boardResponseDto.getBoardTypeEnum().equals("[비밀]") && !boardAuth){
+        if (boardResponseDto.getBoardTypeEnum().equals(BoardType.S) && !boardAuth) {
             model.addAttribute("message", "접근 권한이 없습니다.");
-            model.addAttribute("url", "/board_list");
+            model.addAttribute("url", "/board");
             return "/alert";
         }
 
+        if (boardResponseDto.isImageYn()) {
+            String imagePath = boardService.getImagePathByBoardSeq(boardResponseDto.getBoardSeq()).substring(25);
+            log.info("imagePath = {}", imagePath);
+            model.addAttribute("imagePath", imagePath);
+        }
 
+        boardService.updateViewCnt(boardResponseDto.getBoardSeq());
         model.addAttribute("boardResponseDto", boardResponseDto);
         model.addAttribute("boardUserId", boardUserId);
         model.addAttribute("boardAuth", boardAuth);
@@ -194,9 +202,9 @@ public class BoardController {
     }
 
     // 게시물 삭제
-    @DeleteMapping("boards/{boardSeq}")
+    @DeleteMapping("board/{boardSeq}")
     public String deleteBoard(Model model, @PathVariable("boardSeq") Long boardSeq) {
-        log.info("delete board", boardSeq);
+        log.info("delete board   boardSeq: {}", boardSeq);
         boardService.deleteBoard(boardSeq);
 
         model.addAttribute("message", "게시글이 삭제 되었습니다.");
@@ -206,23 +214,71 @@ public class BoardController {
 
     // 게시물 업데이트 페이지 이동
     @GetMapping("board/edit/{boardSeq}")
-    public String updateBoardPage(Model model, @PathVariable("boardSeq") Long boardSeq) {
+    public String updateBoardPage(Model model, @PathVariable("boardSeq") Long boardSeq, HttpServletRequest httpServletRequest) {
 
 
         BoardResponseDto boardResponseDto = boardService.findByBoardSeq(boardSeq);
         UserDto userDto = userService.findByUserSeq(boardResponseDto.getUserSeq());
         String boardUserId = userDto.getUserId();
 
+        HttpSession session = httpServletRequest.getSession();
+        // 현재 로그인 중인 유저 권한
+        boolean isAdmin = (boolean) session.getAttribute("admin");
+
+        if (boardResponseDto.isImageYn()) {
+            String imagePath = boardService.getImagePathByBoardSeq(boardResponseDto.getBoardSeq()).substring(25);
+            log.info("imagePath = {}", imagePath);
+            model.addAttribute("imagePath", imagePath);
+        }
+
         model.addAttribute("boardResponseDto", boardResponseDto);
         model.addAttribute("boardUserId", boardUserId);
+        model.addAttribute("isAdmin", isAdmin);
         return "board_update";
     }
 
     // 게시물 업데이트 적용
     @PutMapping("board/{boardSeq}")
-    public String updateBoard(@PathVariable("boardSeq") Long boardSeq, @ModelAttribute("boardResponseDto") BoardResponseDto boardResponseDto) {
+    public String updateBoard(@PathVariable("boardSeq") Long boardSeq,
+                              @ModelAttribute("boardResponseDto") BoardResponseDto boardResponseDto,
+                              @RequestParam("image") MultipartFile file,
+                              HttpServletRequest httpServletRequest,
+                              RedirectAttributes redirectAttributes,
+                              BindingResult bindingResult) {
+
         BoardRequestDto boardRequestDto = new BoardRequestDto(boardResponseDto);
-        boardService.updateBoard(boardSeq, boardRequestDto);
+        HttpSession session = httpServletRequest.getSession();
+        boolean isAdmin = (boolean) session.getAttribute("admin");
+        try {
+            boardService.validateBoardRequest(boardRequestDto, bindingResult);
+            if (bindingResult.hasErrors()) {
+                for (FieldError error : bindingResult.getFieldErrors()) {
+                    log.error("Validation error in field '{}' with value '{}'. Error message: {}",
+                            error.getField(), error.getRejectedValue(), error.getDefaultMessage());
+                }
+                return "redirect:/board";
+            }
+
+
+            log.info("게시글 작성 요청: {}", boardRequestDto);
+
+
+            // 요청받은 boardType이 "N"인 경우 관리자 여부를 확인
+            if (BoardType.N.name().equals(boardRequestDto.getBoardType()) && isAdmin) {
+                redirectAttributes.addFlashAttribute("errorMessage", "관리자만 공지글을 작성할 수 있습니다.");
+                return "redirect:/board/" + boardSeq;
+            }
+            boardService.updateBoard(boardSeq, boardRequestDto, file);
+
+        } catch (IOException e) {
+            log.error("Error occurred during board registration: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/board/register";
+        }
+
+
+
+
 
         return "redirect:/board/" + boardSeq;
     }

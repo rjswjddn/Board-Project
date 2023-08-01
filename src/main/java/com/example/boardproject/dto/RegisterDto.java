@@ -23,7 +23,7 @@ public class RegisterDto {
                 .userId(this.userId)
                 .userPwd(this.userPwd)
                 .userStatus(1)
-                .userAdmin(0)
+                .userAdmin(false)
                 .build();
     }
 }
