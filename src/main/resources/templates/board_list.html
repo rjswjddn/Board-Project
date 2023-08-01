@@ -77,17 +77,16 @@
 <!--                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">-->
 <!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
 <!--                                    </span>-->
-
-                                    <span th:if="${board.getBoardTypeEnum() == T(com.example.boardproject.entity.BoardType).S}">
-                                        <span th:if="${board.userSeq == session.userSeq} or ${session.admin == 1}">
+                                    <span th:if="${board.getBoardTypeEnum().name() == T(com.example.boardproject.entity.BoardType).S.name()}">
+                                        <span th:if="${board.userSeq == session.userSeq} or ${session.admin}">
                                             <a th:method="get" th:href="@{/board/{boardSeq}(boardSeq = ${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
                                         </span>
-                                        <span th:unless="${board.userSeq == session.userSeq} or ${session.admin == 1}">
+                                        <span th:unless="${board.userSeq == session.userSeq} or ${session.admin}">
                                             <span>비밀글입니다.</span>
                                         </span>
                                     </span>
 
-                                    <span th:unless="${board.getBoardTypeEnum() == T(com.example.boardproject.entity.BoardType).S}">
+                                    <span th:unless="${board.getBoardTypeEnum().name() == T(com.example.boardproject.entity.BoardType).S.name()}">
                                         <a th:method="get" th:href="@{/board/{boardSeq}(boardSeq = ${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
                                     </span>
 
@@ -123,7 +122,7 @@
                         <!-- 페이지 번호 표시 -->
                         <li th:each="pageNum : ${#numbers.sequence(currentPage / 5 * 5, (currentPage / 5 * 5) + 4)}" class="page-item">
                             <a th:if="${pageNum < totalPages}" th:href="@{/board(page=${pageNum})}"
-                               th:text="${pageNum + 1}" class="page-link"></a>
+                               th:text="${pageNum + 1}" class="page-link" th:classappend="${currentPage==pageNum}?'disabled'"></a>
                         </li>
 
                         <li th:classappend="${(currentPage / 5 * 5) + 5 > totalPages}?'disabled'" class="page-item">

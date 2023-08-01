@@ -51,14 +51,14 @@
                 <div type="text" class="form-control" id="content" name="content" th:text="${boardResponseDto.boardContent}"></div>
               </div>
 
-              <div class="mb-3">
-                <label for="image" class="form-label">Image</label>
-                <input type="file" class="form-control" id="image" name="image">
+              <div th:if="${imagePath}" class="mb-3">
+                <label for="image" class="form-label"></label>
+                <img th:src="@{/files/{imagePath}(imagePath=${imagePath})}" id="image">
               </div>
             </form>
             <div>
               <a th:href="@{/board}" class="btn btn-outline-secondary">뒤로</a>
-              <form th:if="${boardAuth}" th:method="DELETE" th:action="@{/boards/{boardSeq}(boardSeq = ${boardResponseDto.boardSeq})}" class="d-inline">
+              <form th:if="${boardAuth}" th:method="DELETE" th:action="@{/board/{boardSeq}(boardSeq = ${boardResponseDto.boardSeq})}" class="d-inline">
                   <button class="btn btn-outline-primary">삭제</button>
               </form>
               <form th:if="${boardAuth}" th:method="GET" th:action="@{/board/edit/{boardSeq}(boardSeq = ${boardResponseDto.boardSeq})}" class="d-inline">
@@ -70,6 +70,36 @@
               </form>
               <span id="likeStatus" th:text="'좋아요 누른 사람 ' + ${likeCount} + '명'"></span>
             </div>
+          </div>
+        </div>
+        <div class="card mb-4">
+          <div class="card-body">
+            <form class="form-horizontal">
+              <div class="row">
+                <div class="form-group col-sm-10">
+                  <input class="form-control input-sm" type="text" id="comment" placeholder="댓글 입력...">
+                </div>
+                <div class="form-group col-sm-2">
+                  <button type="button" class="btn btn-primary btn-sm btn-block replyAddBtn col-sm-5">
+                    저장
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="card card-primary card-outline">
+
+          <div class="card-body repliesDiv">
+
+          </div>
+
+          <div class="card-footer">
+            <nav aria-label="Contacts Page Navigation">
+              <ul class="pagination pagination-sm no-margin justify-content-center m-0">
+
+              </ul>
+            </nav>
           </div>
         </div>
       </div>
