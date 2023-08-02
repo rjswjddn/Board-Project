@@ -33,7 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class BoardService {
-    @Value("${upload.directory}")
+    @Value("D:/projects/image/")
     private String uploadDirectory;
 
     private final BoardRepository boardRepository;
@@ -249,7 +249,6 @@ public class BoardService {
     }
 
 
-
     //좋아요 기능
     @Transactional
     public String toggleLike(Long boardSeq, Long userSeq) {
@@ -276,6 +275,7 @@ public class BoardService {
     public String getImagePathByBoardSeq(Long boardSeq) {
         return boardImageRepository.getImagePathByBoardSeq(boardSeq);
     }
+
     // 사용자가 해당 게시글에 좋아요를 눌렀는지 확인하는 메서드
     public boolean isLiked(Long boardSeq, Long userSeq) {
         return boardLikeRepository.existsByBoardSeqAndUserSeq(boardSeq, userSeq);
@@ -288,7 +288,9 @@ public class BoardService {
 
 
     public void updateViewCnt(Long boardSeq) {
+
         boardRepository.updateViewCntByBoardSeq(boardSeq);
+
     }
 
 

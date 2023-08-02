@@ -53,7 +53,7 @@
 
               <div th:if="${imagePath}" class="mb-3">
                 <label for="image" class="form-label"></label>
-                <img th:src="@{/files/{imagePath}(imagePath=${imagePath})}" id="image">
+                <img th:src="@{/image/{imagePath}(imagePath=${imagePath})}" id="image">
               </div>
             </form>
             <div>
@@ -69,6 +69,8 @@
                 <button id="dislikeButton" class="btn btn-secondary" type="button" th:style="'display: ' + (${liked} ? 'inline-block' : 'none')"><i class="fa fa-thumbs-down"></i>좋아요 취소</button>
               </form>
               <span id="likeStatus" th:text="'좋아요 누른 사람 ' + ${likeCount} + '명'"></span>
+              &middot;
+              <span th:text="${'조회수 : ' + boardResponseDto.viewCnt}"></span>
             </div>
           </div>
         </div>
