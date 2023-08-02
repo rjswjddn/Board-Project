@@ -7,6 +7,7 @@ import com.example.boardproject.entity.BoardType;
 import com.example.boardproject.service.BoardService;
 import com.example.boardproject.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -70,8 +71,8 @@ public class BoardController {
     //검색 기능
     @GetMapping("/search")
     public ModelAndView search(@RequestParam(name = "searchType", defaultValue = "boardTitle") String searchType,
-                         @RequestParam(name = "keyword") String keyword,
-                         @RequestParam(name = "page", defaultValue = "0") int page) {
+                               @RequestParam(name = "keyword") String keyword,
+                               @RequestParam(name = "page", defaultValue = "0") int page) {
         int pageSize = 10;
         Page<BoardResponseDto> searchResult = boardService.searchBoards(searchType, keyword, page, pageSize);
 
@@ -162,10 +163,11 @@ public class BoardController {
     }
 
 
-
-
     @GetMapping("board/{boardSeq}")
-    public String viewBoard(@PathVariable("boardSeq") Long boardSeq, Model model, HttpServletRequest httpServletRequest) {
+    public String viewBoard(@PathVariable("boardSeq") Long boardSeq, Model model, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+        // 조회수 증가
+        boardService.updateViewCnt(boardSeq);
+
         BoardResponseDto boardResponseDto = boardService.findByBoardSeq(boardSeq);
 
         // 게시물 등록 유저 정보
@@ -188,13 +190,14 @@ public class BoardController {
             return "/alert";
         }
 
+        // 이미지 경로
         if (boardResponseDto.isImageYn()) {
             String imagePath = boardService.getImagePathByBoardSeq(boardResponseDto.getBoardSeq());
             log.info("imagePath = {}", imagePath.substring(imagePath.lastIndexOf("/")));
             model.addAttribute("imagePath", imagePath.substring(imagePath.lastIndexOf("/")));
         }
 
-        boardService.updateViewCnt(boardResponseDto.getBoardSeq());
+
         model.addAttribute("boardResponseDto", boardResponseDto);
         model.addAttribute("boardUserId", boardUserId);
         model.addAttribute("boardAuth", boardAuth);
@@ -290,13 +293,8 @@ public class BoardController {
         }
 
 
-
-
-
         return "redirect:/board/" + boardSeq;
     }
-
-
 
 
     // 게시물 좋아요
@@ -312,8 +310,6 @@ public class BoardController {
         response.put("likeCount", likeCount);
         return response;
     }
-
-
 
 
 }
