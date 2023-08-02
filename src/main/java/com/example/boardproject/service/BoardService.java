@@ -33,7 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class BoardService {
-    @Value("${upload.directory}")
+    @Value("D:/projects/image/")
     private String uploadDirectory;
 
     private final BoardRepository boardRepository;

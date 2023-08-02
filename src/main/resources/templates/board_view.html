@@ -53,7 +53,7 @@
 
               <div th:if="${imagePath}" class="mb-3">
                 <label for="image" class="form-label"></label>
-                <img th:src="@{/files/{imagePath}(imagePath=${imagePath})}" id="image">
+                <img th:src="@{/image/{imagePath}(imagePath=${imagePath})}" id="image">
               </div>
             </form>
             <div>
