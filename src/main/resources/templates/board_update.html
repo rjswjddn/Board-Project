@@ -61,7 +61,7 @@
 
                             <div id="imagePreview" style="display: none;">
                                 <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                                    <img id="previewImg" th:src="${imagePath}" alt="Image Preview" style="max-width: 200px; max-height: 200px;">
+                                    <img id="previewImg" th:src="@{/image/{imagePath}(imagePath=${imagePath})}" alt="Image Preview" style="max-width: 200px; max-height: 200px;">
                                     <a class="btn btn-danger btn-sm" onclick="removeImage()">삭제</a>
                                 </div>
                             </div>

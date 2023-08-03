@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class BoardService {
-    @Value("${upload.directory}")
+    @Value("D:/projects/image/")
     private String uploadDirectory;
 
     private final BoardRepository boardRepository;
@@ -292,7 +292,21 @@ public class BoardService {
 
 
     public void updateViewCnt(Long boardSeq) {
+
         boardRepository.updateViewCntByBoardSeq(boardSeq);
+
+    }
+
+    @Transactional
+    public void updateComment(Long commentSeq, CommentDto commentDto){
+        BoardCommentEntity boardCommentEntity = boardCommentRepository.findByCommentSeq(commentSeq);
+        boardCommentEntity.setCommentContent(commentDto.getCommentContent());
+        boardCommentRepository.save(boardCommentEntity);
+    }
+
+    @Transactional
+    public void deleteComment(Long commentSeq){
+        boardCommentRepository.deleteCommentByCommentSeq(commentSeq);
     }
 
 

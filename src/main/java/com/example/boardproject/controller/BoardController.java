@@ -3,6 +3,7 @@ package com.example.boardproject.controller;
 import com.example.boardproject.dto.BoardCommentRequestDto;
 import com.example.boardproject.dto.BoardRequestDto;
 import com.example.boardproject.dto.BoardResponseDto;
+import com.example.boardproject.dto.CommentDto;
 import com.example.boardproject.dto.UserDto;
 import com.example.boardproject.entity.BoardCommentEntity;
 import com.example.boardproject.entity.BoardType;
@@ -175,6 +176,9 @@ public class BoardController {
 
     @GetMapping("board/{boardSeq}")
     public String viewBoard(@PathVariable("boardSeq") Long boardSeq, Model model, HttpServletRequest httpServletRequest) {
+        // 조회수 증가
+        boardService.updateViewCnt(boardSeq);
+
         BoardResponseDto boardResponseDto = boardService.findByBoardSeq(boardSeq);
 
         // 게시물 등록 유저 정보
@@ -198,13 +202,14 @@ public class BoardController {
             return "/alert";
         }
 
+        // 이미지 경로
         if (boardResponseDto.isImageYn()) {
             String imagePath = boardService.getImagePathByBoardSeq(boardResponseDto.getBoardSeq());
             log.info("imagePath = {}", imagePath.substring(imagePath.lastIndexOf("/")));
             model.addAttribute("imagePath", imagePath.substring(imagePath.lastIndexOf("/")));
         }
 
-        boardService.updateViewCnt(boardResponseDto.getBoardSeq());
+
         model.addAttribute("boardResponseDto", boardResponseDto);
         model.addAttribute("boardUserId", boardUserId);
         model.addAttribute("boardAuth", boardAuth);
@@ -251,9 +256,9 @@ public class BoardController {
         boolean isAdmin = (boolean) session.getAttribute("admin");
 
         if (boardResponseDto.isImageYn()) {
-            String imagePath = boardService.getImagePathByBoardSeq(boardResponseDto.getBoardSeq()).substring(25);
-            log.info("imagePath = {}", imagePath);
-            model.addAttribute("imagePath", imagePath);
+            String imagePath = boardService.getImagePathByBoardSeq(boardResponseDto.getBoardSeq());
+            log.info("imagePath = {}", imagePath.substring(imagePath.lastIndexOf("/")));
+            model.addAttribute("imagePath", imagePath.substring(imagePath.lastIndexOf("/")));
         }
 
         model.addAttribute("boardResponseDto", boardResponseDto);
@@ -300,6 +305,7 @@ public class BoardController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/board/register";
         }
+
 
         return "redirect:/board/" + boardSeq;
     }
@@ -366,6 +372,13 @@ public class BoardController {
 
 
 
+    @DeleteMapping("/board/{commentSeq}")
+    public void deleteComment(@PathVariable("commentSeq") Long commentSeq){
+        boardService.deleteComment(commentSeq);
+    }
 
-
+    @PutMapping("/board/{commentSeq}")
+    public void updateComment(@PathVariable("commentSeq") Long commentSeq, CommentDto commentDto) {
+        boardService.updateComment(commentSeq, commentDto);
+    }
 }
