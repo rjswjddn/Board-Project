@@ -3,7 +3,6 @@ package com.example.boardproject.controller;
 import com.example.boardproject.dto.BoardCommentRequestDto;
 import com.example.boardproject.dto.BoardRequestDto;
 import com.example.boardproject.dto.BoardResponseDto;
-import com.example.boardproject.dto.CommentDto;
 import com.example.boardproject.dto.UserDto;
 import com.example.boardproject.entity.BoardCommentEntity;
 import com.example.boardproject.entity.BoardType;
@@ -378,7 +377,7 @@ public class BoardController {
     }
 
     @PutMapping("/board/{commentSeq}")
-    public void updateComment(@PathVariable("commentSeq") Long commentSeq, CommentDto commentDto) {
+    public void updateComment(@PathVariable("commentSeq") Long commentSeq, BoardCommentRequestDto commentDto) {
         boardService.updateComment(commentSeq, commentDto);
     }
 }
