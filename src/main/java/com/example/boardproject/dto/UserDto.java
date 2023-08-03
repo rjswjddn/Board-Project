@@ -18,7 +18,7 @@ public class UserDto {
 
     private int userStatus;
 
-    private int userAdmin;
+    private boolean userAdmin;
 
     private LocalDateTime userRegDate;
 
@@ -27,7 +27,7 @@ public class UserDto {
         this.userId = userEntity.getUserId();
         this.userPwd = userEntity.getUserPwd();
         this.userStatus = userEntity.getUserStatus();
-        this.userAdmin = userEntity.getUserAdmin();
+        this.userAdmin = userEntity.isUserAdmin();
         this.userRegDate = userEntity.getUserRegDate();
     }
 }

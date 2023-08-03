@@ -18,7 +18,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Long findUserSeqByUserId(@Param("userId") String userId);
 
     @Query("SELECT u.userAdmin FROM UserEntity u WHERE u.userId = ?1")
-    int getUserAdminByUserId(String userId);
+    boolean getUserAdminByUserId(String userId);
 
     UserEntity findByUserSeq(Long userSeq);
 }

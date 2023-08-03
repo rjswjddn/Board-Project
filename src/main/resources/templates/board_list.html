@@ -56,7 +56,7 @@
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th th:if="${isAdmin}" ><input type="checkbox" id="selectAll"/></th>
+<!--                                <th th:if="${isAdmin}" ><input type="checkbox" id="selectAll"/></th>-->
                                 <th>번호</th>
                                 <th>제목</th>
                                 <th>작성자</th>
@@ -67,63 +67,37 @@
                             </thead>
                             <tbody>
                             <tr th:each="board: ${Boards}">
-                                <td th:if="${isAdmin}" ><input type="checkbox" class="checkbox-item"/></td>
+<!--                                <td th:if="${isAdmin}" ><input type="checkbox" class="checkbox-item"/></td>-->
                                 <td th:text="${board.boardSeq}"></td>
                                 <td>
-                                    <!-- 신규 등록 아이콘 표시 -->
-                                    <span th:if="${T(java.time.LocalDateTime).now().minusHours(24).isBefore(board.boardCreatedDate)}">
-                                        <i class="fas fa-bell"></i>
-                                    </span>
                                     <span th:if="${board.getBoardTypeEnum().getIconClass() != null}">
                                         <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>
                                     </span>
-                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">
-                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>
+
+<!--                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">-->
+<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
+<!--                                    </span>-->
+                                    <span th:if="${board.getBoardTypeEnum().name() == T(com.example.boardproject.entity.BoardType).S.name()}">
+                                        <span th:if="${board.userSeq == session.userSeq} or ${session.admin}">
+                                            <a th:method="get" th:href="@{/board/{boardSeq}(boardSeq = ${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
+                                        </span>
+                                        <span th:unless="${board.userSeq == session.userSeq} or ${session.admin}">
+                                            <span>비밀글입니다.</span>
+                                        </span>
                                     </span>
-                                    <a th:method="get" th:href="@{/board/{boardSeq}(boardSeq = ${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
+
+                                    <span th:unless="${board.getBoardTypeEnum().name() == T(com.example.boardproject.entity.BoardType).S.name()}">
+                                        <a th:method="get" th:href="@{/board/{boardSeq}(boardSeq = ${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
+                                    </span>
+
                                     <span th:if="${board.commentCnt > 0}" th:text="' [' + ${board.commentCnt} + ']'"></span>
-                                    <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>
 
+                                    <span th:if="${board.imageYn}"><i class="fa-regular fa-image"></i></span>
 
-<!--ver. 2 (비밀글입니다. but 접근 불가)-->
-<!--                                    <span th:if="${board.getBoardTypeEnum() == T(com.example.boardproject.entity.BoardType).S}">-->
-<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
-<!--                                    </span>-->
-<!--                                    <span th:else-if="${board.getBoardTypeEnum().getIconClass() != null}">-->
-<!--                                        <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>-->
-<!--                                    </span>-->
-<!--                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">-->
-<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
-<!--                                    </span>-->
-<!--                                    <span th:if="${board.getBoardTypeEnum() != T(com.example.boardproject.entity.BoardType).S}">-->
-<!--                                        <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
-<!--                                        <span th:text="${board.commentCnt > 0} ? '[' + ${board.commentCnt} + ']' : ''"></span>-->
-<!--                                        <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>-->
-<!--                                    </span>-->
-
-
-<!--ver. 3 (개발중)-->
-<!--                                    <span th:if="${board.getBoardTypeEnum() == T(com.example.boardproject.entity.BoardType).S}">-->
-<!--                                        <span th:if="${board.userId == #session.getAttribute('userId')}">-->
-<!--                                            <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
-<!--                                        </span>-->
-<!--                                        <span th:unless="${board.userId == #session.getAttribute('userId')}">-->
-<!--                                            <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
-<!--                                        </span>-->
-<!--                                    </span>-->
-<!--                                    <span th:else-if="${board.getBoardTypeEnum().getIconClass() != null}">-->
-<!--                                        <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>-->
-<!--                                    </span>-->
-<!--                                    <span th:unless="${board.getBoardTypeEnum().getIconClass() != null}">-->
-<!--                                        <span th:text="${board.getBoardTypeEnum().getDisplayName()}"></span>-->
-<!--                                    </span>-->
-<!--                                    <span th:if="${board.getBoardTypeEnum() != T(com.example.boardproject.entity.BoardType).S}">-->
-<!--                                        <a th:href="@{/board_view(boardseq=${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>-->
-<!--                                        <span th:text="${board.commentCnt > 0} ? '[' + ${board.commentCnt} + ']' : ''"></span>-->
-<!--                                        <span th:if="${board.imageYn}"><i class="fas fa-image"></i></span>-->
-<!--                                    </span>-->
-
-
+                                    <!-- 신규 등록 아이콘 표시 -->
+                                    <span th:if="${T(java.time.LocalDateTime).now().minusHours(24).isBefore(board.boardCreatedDate)}">
+                                        <i class="fa-sharp fa-n fa-xs fa-fade" style="color: #ff0000;"></i>
+                                    </span>
                                 </td>
                                 <td th:text="${board.userId}"></td>
                                 <td th:text="${#temporals.format(board.boardCreatedDate, 'yyyy-MM-dd HH:mm' )}"></td>
@@ -148,7 +122,7 @@
                         <!-- 페이지 번호 표시 -->
                         <li th:each="pageNum : ${#numbers.sequence(currentPage / 5 * 5, (currentPage / 5 * 5) + 4)}" class="page-item">
                             <a th:if="${pageNum < totalPages}" th:href="@{/board(page=${pageNum})}"
-                               th:text="${pageNum + 1}" class="page-link"></a>
+                               th:text="${pageNum + 1}" class="page-link" th:classappend="${currentPage==pageNum}?'disabled'"></a>
                         </li>
 
                         <li th:classappend="${(currentPage / 5 * 5) + 5 > totalPages}?'disabled'" class="page-item">
@@ -191,16 +165,16 @@
 </div>
 
 <script th:inline="javascript">
-    document.addEventListener('DOMContentLoaded', function () {
-        const selectAllCheckbox = document.getElementById('selectAll');
-        const checkboxes = document.querySelectorAll('.checkbox-item');
-
-        selectAllCheckbox.addEventListener('click', function () {
-            checkboxes.forEach(function (checkbox) {
-                checkbox.checked = selectAllCheckbox.checked;
-            });
-        });
-    });
+    // document.addEventListener('DOMContentLoaded', function () {
+    //     const selectAllCheckbox = document.getElementById('selectAll');
+    //     const checkboxes = document.querySelectorAll('.checkbox-item');
+    //
+    //     selectAllCheckbox.addEventListener('click', function () {
+    //         checkboxes.forEach(function (checkbox) {
+    //             checkbox.checked = selectAllCheckbox.checked;
+    //         });
+    //     });
+    // });
 
     // $(document).ready(function () {
     //     $("#deleteForm").submit(function (event) {

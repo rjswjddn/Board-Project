@@ -35,7 +35,7 @@ public class UserEntity {
     private int userStatus;
 
     @Column(name = "user_admin")
-    private int userAdmin;
+    private boolean userAdmin;
 
 
     @CreatedDate
