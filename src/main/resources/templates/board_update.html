@@ -37,7 +37,8 @@
                             </div>
                             <div class="mb-3 mt-3">
                                 <label for="title" class="form-label">제목</label>
-                                <input th:field="*{boardTitle}" type="text" class="form-control" id="title" onblur="validateTitleForm(this)" onkeydown="preventFormSubmit(event)">
+                                <input th:field="*{boardTitle}" type="text" class="form-control" id="title" onblur="validateTitleForm(this)" oninput="updateTitleCharacterCount()" onkeydown="preventFormSubmit(event)">
+                                <div id="titleCharacterCount" class="text-secondary">0 / 45자</div>
                                 <div id="titleError" class="text-danger"></div>
                             </div>
 
@@ -48,30 +49,10 @@
 
                             <div class="mb-3">
                                 <label for="content" class="form-label">내용</label>
-                                <textarea th:field="*{boardContent}" class="form-control" id="content" onblur="validateContentForm(this)" oninput="updateByteCount()" style="height: 300px;"></textarea>
-                                <div id="byteCount" class="text-secondary">0 / 2000 bytes</div>
+                                <textarea th:field="*{boardContent}" class="form-control" id="content" onblur="validateContentForm(this)" oninput="updateCharacterCount()" style="height: 300px;"></textarea>
+                                <div id="characterCount" class="text-secondary">0 / 2000자</div>
                                 <div id="contentError" class="text-danger"></div>
-                                <!--                                <div th:if="${#fields.hasErrors('boardContent')}" th:errors="*{boardContent}" class="text-danger"></div>-->
                             </div>
-
-
-<!--                            <div class="mb-3 mt-3">-->
-<!--                                <label for="title" class="form-label">Title</label>-->
-<!--                                <input th:field="*{boardTitle}" type="text" class="form-control" id="title"-->
-<!--                                       name="title">-->
-<!--                            </div>-->
-
-<!--                            <div class="mb-3">-->
-<!--                                <label for="userId" class="form-label">user ID</label>-->
-<!--                                <div th:text="${boardUserId}" type="text" class="form-control" id="userId"-->
-<!--                                     name="userId"></div>-->
-<!--                            </div>-->게시판 파일 등록 삭제
-
-<!--                            <div class="mb-3">-->
-<!--                                <label for="content" class="form-label">content</label>-->
-<!--                                <input th:field="*{boardContent}" type="text" class="form-control" id="content"-->
-<!--                                       name="content">-->
-<!--                            </div>-->
 
                             <div class="mb-3">
                                 <label for="image" class="form-label">이미지 첨부</label>
@@ -84,6 +65,7 @@
                                     <a class="btn btn-danger btn-sm" onclick="removeImage()">삭제</a>
                                 </div>
                             </div>
+
                             <script th:inline="javascript">
                                 var imagePathValue = [[${imagePath}]]; // Thymeleaf를 통해 imagePath의 값 가져오기
 
@@ -92,119 +74,136 @@
                                     document.getElementById('imagePreview').style.display = 'block';
                                 }
                             </script>
+
                             <input id="imageYn" type="hidden" th:field="*{imageYn}">
 
                             <a th:href="@{/board}" class="btn btn-outline-secondary">뒤로</a>
-                            <button class="btn btn-outline-primary">등록</button>
+                            <button id="submitButton" class="btn btn-primary">등록</button>
 
-                            <script>
+<!--                            <script>-->
 
-                                //유효성 검사
-                                function validateTitleForm() {
-                                    var title = document.getElementById('title').value;
-                                    var titleError = document.getElementById('titleError');
+<!--                                //유효성 검사-->
+<!--                                function validateTitleForm() {-->
+<!--                                    var title = document.getElementById('title').value;-->
+<!--                                    var titleError = document.getElementById('titleError');-->
 
-                                    // 에러 메시지 초기화
-                                    titleError.innerHTML = "";
+<!--                                    // 에러 메시지 초기화-->
+<!--                                    titleError.innerHTML = "";-->
 
-                                    if (title.trim() === '') {
-                                        titleError.innerHTML = "제목을 입력해주세요.";
-                                        return false;
-                                    }
+<!--                                    if (title.trim() === '') {-->
+<!--                                        titleError.innerHTML = "제목을 입력해주세요.";-->
+<!--                                        return false;-->
+<!--                                    }-->
 
-                                    return true;
-                                }
+<!--                                    if (title.length > 45) {-->
+<!--                                        titleError.innerHTML = "제목은 최대 45자까지 입력 가능합니다."-->
+<!--                                        return false;-->
+<!--                                    }-->
 
-                                function validateContentForm() {
-                                    var content = document.getElementById('content').value;
-                                    var contentError = document.getElementById('contentError');
-                                    var byteCount = new Blob([content]).size; // Get the byte count of the content
+<!--                                    return true;-->
+<!--                                }-->
 
-                                    // 에러 메시지 초기화
-                                    contentError.innerHTML = "";
+<!--                                function validateContentForm() {-->
+<!--                                    var content = document.getElementById('content').value;-->
+<!--                                    var contentError = document.getElementById('contentError');-->
 
-                                    if (content.trim() === '') {
-                                        contentError.innerHTML = "내용을 입력해주세요.";
-                                        return false;
-                                    }
+<!--                                    // 에러 메시지 초기화-->
+<!--                                    contentError.innerHTML = "";-->
 
-                                    if (byteCount > 2000) {
-                                        contentError.innerHTML = "내용은 최대 2000byte까지 입력 가능합니다.";
-                                        return false;
-                                    }
+<!--                                    if (content.trim() === '') {-->
+<!--                                        contentError.innerHTML = "내용을 입력해주세요.";-->
+<!--                                        return false;-->
+<!--                                    }-->
 
-                                    return true;
-                                }
+<!--                                    if (content.length > 2000) {-->
+<!--                                        contentError.innerHTML = "내용은 최대 2000자까지 입력 가능합니다.";-->
+<!--                                        return false;-->
+<!--                                    }-->
 
-                                function updateSubmitButtonState() {
-                                    var title = document.getElementById('title').value;
-                                    var content = document.getElementById('content').value;
+<!--                                    return true;-->
+<!--                                }-->
 
-                                    var isTitleValid = title.trim() !== '';
-                                    var isContentValid = content.trim() !== '' && new Blob([content]).size <= 2000;
+<!--                                function updateSubmitButtonState() {-->
+<!--                                    var title = document.getElementById('title').value;-->
+<!--                                    var content = document.getElementById('content').value;-->
 
-                                    // 글작성 버튼 상태 업데이트
-                                    var submitButton = document.getElementById('submitButton');
-                                    submitButton.disabled = !(isTitleValid && isContentValid);
-                                }
+<!--                                    var isTitleValid = title.trim() !== '' && title.length <= 45;-->
+<!--                                    var isContentValid = content.trim() !== '' && content.length <= 2000;-->
 
-
-                                // 글자 수 세기
-                                function updateByteCount() {
-                                    var textarea = document.getElementById('content');
-                                    var byteCount = document.getElementById('byteCount');
-
-                                    // 입력된 내용을 UTF-8로 인코딩한 후, byte 수를 계산
-                                    var byteLength = new Blob([textarea.value], {type: 'text/plain; charset=utf-8'}).size;
-
-                                    // byte 수를 화면에 업데이트
-                                    byteCount.innerHTML = byteLength + " / 2000 bytes";
-
-                                }
-
-                                document.getElementById('title').addEventListener('input', updateSubmitButtonState);
-                                document.getElementById('content').addEventListener('input', function () {
-                                    updateByteCount();
-                                    updateSubmitButtonState();
-                                });
-
-                                // 이미지 첨부시 미리보기
-                                function previewImage(input) {
-                                    if (input.files && input.files[0]) {
-                                        var reader = new FileReader();
-
-                                        reader.onload = function (e) {
-                                            document.getElementById('previewImg').setAttribute('src', e.target.result);
-                                            document.getElementById('imagePreview').style.display = 'block';
-                                        }
-
-                                        reader.readAsDataURL(input.files[0]);
-                                    }
-                                }
-
-                                // 첨부한 이미지 삭제
-                                function removeImage() {
-                                    document.getElementById('image').value = ''; // 파일 선택을 초기화
-                                    document.getElementById('previewImg').setAttribute('src', '');
-                                    document.getElementById('imagePreview').style.display = 'none';
-                                    document.getElementById('imageYn').value = false;
-                                }
-
-                                // 이미지 첨부 에러메시지
-                                var errorMessage = "[[${errorMessage}]]";
-                                if (errorMessage) {
-                                    alert(errorMessage);
-                                }
-
-                                // 엔터 키를 눌렀을 때 폼 제출 방지
-                                function preventFormSubmit(event) {
-                                    if (event.keyCode === 13) {
-                                        event.preventDefault();
-                                    }
-                                }
+<!--                                    // 글작성 버튼 상태 업데이트-->
+<!--                                    var submitButton = document.getElementById('submitButton');-->
+<!--                                    submitButton.disabled = !(isTitleValid && isContentValid);-->
+<!--                                }-->
 
 
-                            </script>
+<!--                                // 글자 수 세기-->
+<!--                                function updateTitleCharacterCount() {-->
+<!--                                    var textarea = document.getElementById('title');-->
+<!--                                    var titleCharacterCount = document.getElementById('titleCharacterCount');-->
+
+<!--                                    // 입력된 내용의 글자 수를 계산-->
+<!--                                    var text = textarea.value;-->
+<!--                                    var characterLength = text.length;-->
+
+<!--                                    // 글자 수를 화면에 업데이트-->
+<!--                                    titleCharacterCount.innerHTML = characterLength + " / 45자";-->
+<!--                                }-->
+
+<!--                                function updateCharacterCount() {-->
+<!--                                    var textarea = document.getElementById('content');-->
+<!--                                    var characterCount = document.getElementById('characterCount');-->
+
+<!--                                    // 입력된 내용의 글자 수를 계산-->
+<!--                                    var text = textarea.value;-->
+<!--                                    var characterLength = text.length;-->
+
+<!--                                    // 글자 수를 화면에 업데이트-->
+<!--                                    characterCount.innerHTML = characterLength + " / 2000자";-->
+<!--                                }-->
+
+<!--                                // document.getElementById('title').addEventListener('input', updateSubmitButtonState);-->
+<!--                                // document.getElementById('content').addEventListener('input', function () {-->
+<!--                                //     updateCharacterCount();-->
+<!--                                //     updateSubmitButtonState();-->
+<!--                                // });-->
+
+<!--                                // 이미지 첨부시 미리보기-->
+<!--                                function previewImage(input) {-->
+<!--                                    if (input.files && input.files[0]) {-->
+<!--                                        var reader = new FileReader();-->
+
+<!--                                        reader.onload = function (e) {-->
+<!--                                            document.getElementById('previewImg').setAttribute('src', e.target.result);-->
+<!--                                            document.getElementById('imagePreview').style.display = 'block';-->
+<!--                                        }-->
+
+<!--                                        reader.readAsDataURL(input.files[0]);-->
+<!--                                    }-->
+<!--                                }-->
+
+<!--                                // 첨부한 이미지 삭제-->
+<!--                                function removeImage() {-->
+<!--                                    document.getElementById('image').value = ''; // 파일 선택을 초기화-->
+<!--                                    document.getElementById('previewImg').setAttribute('src', '');-->
+<!--                                    document.getElementById('imagePreview').style.display = 'none';-->
+<!--                                    document.getElementById('imageYn').value = false;-->
+<!--                                }-->
+
+<!--                                // 이미지 첨부 에러메시지-->
+<!--                                var errorMessage = "[[${errorMessage}]]";-->
+<!--                                if (errorMessage) {-->
+<!--                                    alert(errorMessage);-->
+<!--                                }-->
+
+<!--                                // 엔터 키를 눌렀을 때 폼 제출 방지-->
+<!--                                function preventFormSubmit(event) {-->
+<!--                                    if (event.keyCode === 13) {-->
+<!--                                        event.preventDefault();-->
+<!--                                    }-->
+<!--                                }-->
+
+
+<!--                            </script>-->
 
                         </form>
                     </div>

@@ -4,9 +4,6 @@
 <head th:replace="/fragment/header.html :: fragment-header">
   <title>Board - SB Admin</title>
 
-
-<!--  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-o0D7S1b/EX5F7ICwNtPI4fp2owlal0llwFG+YI7BvEc=" crossorigin="anonymous"></script>-->
-
 </head>
 
 <body class="sb-nav-fixed">
@@ -74,61 +71,47 @@
             </div>
           </div>
         </div>
+
+        <!-- 댓글 작성란 -->
         <div class="card mb-4">
           <div class="card-body">
-            <form class="form-horizontal">
+            <form id="commentForm" class="form-horizontal" th:action="@{/board/{boardSeq}/register_comment(boardSeq=${boardResponseDto.boardSeq})}" method="post">
               <div class="row">
+                <input type="hidden" name="parentCommentSeq" id="parentCommentSeq" value="">
                 <div class="form-group col-sm-10">
-                  <input class="form-control input-sm" type="text" id="comment" placeholder="댓글 입력...">
+                  <input class="form-control input-sm" type="text" id="comment" name="commentContent" placeholder="댓글 입력...">
                 </div>
                 <div class="form-group col-sm-2">
-                  <button type="button" class="btn btn-primary btn-sm btn-block replyAddBtn col-sm-5">
-                    저장
-                  </button>
+                  <button type="submit" class="btn btn-primary">댓글 작성</button>
                 </div>
               </div>
             </form>
           </div>
         </div>
+
+        <!-- 댓글 목록 -->
         <div class="card card-primary card-outline">
-
           <div class="card-body repliesDiv">
-
-          </div>
-
-          <div class="card-footer">
-            <nav aria-label="Contacts Page Navigation">
-              <ul class="pagination pagination-sm no-margin justify-content-center m-0">
-
-              </ul>
-            </nav>
+            <h4><span th:text="${boardResponseDto.commentCnt} + ' Comments'"></span></h4>
+            <hr> <!-- 분리선 추가 -->
+            <div th:each="comments : ${boardComments}">
+            <span>
+                <p th:text="${loginId} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                <p th:text="${comments.commentContent}"></p>
+                <button class="btn btn-sm btn-primary" onclick="replyToComment('${comments.commentSeq}')" >답글 달기</button>
+                <hr> <!-- 댓글 사이에 분리선 추가 -->
+            </span>
+            </div>
           </div>
         </div>
+
+
       </div>
     </main>
-
-    <!-- Comments Form -->
-    <div class="container-fluid px-4">
-      <div class="card mb-4">
-        <h5 class="card-header">Leave a Comment:</h5>
-        <div class="card-body">
-
-          <form>
-            <div class="form-group">
-              <input type="hidden" name="idx"/>
-              <textarea name="commentContent" class="form-control" rows="3"></textarea>
-            </div>
-            <br> <!-- 공백을 위해 <br> 요소를 추가 -->
-            <button type="submit" class="btn btn-primary">Send</button>
-          </form>
-
-        </div>
-      </div>
-    </div>
-
     <div th:replace="/fragment/footer.html :: fragment-footer"></div>
   </div>
 </div>
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -197,6 +180,7 @@
               });
     });
   });
+
 </script>
 
 <!--        추가해야 드롭다운 가능-->
