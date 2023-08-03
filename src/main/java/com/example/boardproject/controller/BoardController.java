@@ -1,8 +1,10 @@
 package com.example.boardproject.controller;
 
+import com.example.boardproject.dto.BoardCommentRequestDto;
 import com.example.boardproject.dto.BoardRequestDto;
 import com.example.boardproject.dto.BoardResponseDto;
 import com.example.boardproject.dto.UserDto;
+import com.example.boardproject.entity.BoardCommentEntity;
 import com.example.boardproject.entity.BoardType;
 import com.example.boardproject.service.BoardService;
 import com.example.boardproject.service.UserService;
@@ -24,7 +26,10 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -36,15 +41,16 @@ public class BoardController {
     //게시판 페이지
     @GetMapping("/board")
     public ModelAndView board(@RequestParam(name = "page", defaultValue = "0") int page,
-                              HttpSession httpSession) {
+                              HttpSession httpSession,
+                              ModelAndView modelAndView) {
 
         // 로그인한 사용자의 아이디 가져오기
         String userId = (String) httpSession.getAttribute("userId");
         if (userId == null) {
-            return new ModelAndView("redirect:/login");
+            modelAndView.setViewName("redirect:/login");
+            return modelAndView;
         }
 
-//        boolean isAdmin = userService.isAdminUser(userId);
         boolean isAdmin = (boolean) httpSession.getAttribute("admin");
         Pageable pageable = PageRequest.of(page, 10);
         Page<BoardResponseDto> normalBoards = boardService.getAllNormalBoardsWithUsers(pageable);
@@ -56,7 +62,7 @@ public class BoardController {
         }
         allBoards.addAll(normalBoards.getContent());
 
-        ModelAndView modelAndView = new ModelAndView("board_list");
+        modelAndView.setViewName("board_list");
         modelAndView.addObject("Boards", allBoards);
         modelAndView.addObject("currentPage", page);
         modelAndView.addObject("totalPages", normalBoards.getTotalPages());
@@ -71,11 +77,12 @@ public class BoardController {
     @GetMapping("/search")
     public ModelAndView search(@RequestParam(name = "searchType", defaultValue = "boardTitle") String searchType,
                          @RequestParam(name = "keyword") String keyword,
-                         @RequestParam(name = "page", defaultValue = "0") int page) {
+                         @RequestParam(name = "page", defaultValue = "0") int page,
+                               ModelAndView modelAndView) {
         int pageSize = 10;
         Page<BoardResponseDto> searchResult = boardService.searchBoards(searchType, keyword, page, pageSize);
 
-        ModelAndView modelAndView = new ModelAndView("board_list");
+        modelAndView.setViewName("board_list");
         modelAndView.addObject("Boards", searchResult.getContent());
         modelAndView.addObject("currentPage", page);
         modelAndView.addObject("searchType", searchType);
@@ -89,12 +96,14 @@ public class BoardController {
 
     //게시물 작성 페이지
     @GetMapping("board/register")
-    public ModelAndView registerBoardView(HttpSession httpSession) {
+    public ModelAndView registerBoardView(HttpSession httpSession,
+                                          ModelAndView modelAndView) {
 
         // 로그인한 사용자의 아이디 가져오기
         String userId = (String) httpSession.getAttribute("userId");
         if (userId == null) {
-            return new ModelAndView("redirect:/login");
+            modelAndView.setViewName("redirect:/login");
+            return modelAndView;
         }
 
         // 세션에서 관리자 여부 가져오기
@@ -103,7 +112,7 @@ public class BoardController {
         BoardRequestDto boardRequestDto = new BoardRequestDto();
         boardRequestDto.setUserId(userId);
 
-        ModelAndView modelAndView = new ModelAndView("board_register");
+        modelAndView.setViewName("board_register");
         modelAndView.addObject("boardRequestDto", boardRequestDto);
         modelAndView.addObject("isAdmin", isAdmin);
         modelAndView.addObject("userId", userId);
@@ -133,7 +142,7 @@ public class BoardController {
             HttpSession session = httpServletRequest.getSession(false);
             if (session != null) {
                 String userId = (String) session.getAttribute("userId");
-                Long userSeq = userService.findUserSeqByUserId(userId); // userId로 userSeq를 찾아옴
+                Long userSeq = (Long) session.getAttribute("userSeq");
                 boardRequestDto.setUserId(userId);
                 boardRequestDto.setUserSeq(userSeq);
             }
@@ -175,6 +184,7 @@ public class BoardController {
         // 현재 로그인 중인 유저 정보
         HttpSession session = httpServletRequest.getSession();
         String loginId = (String) session.getAttribute("userId");
+        model.addAttribute("loginId", loginId);
 
         // 현재 로그인 중인 유저 권한
         boolean isAdmin = (boolean) session.getAttribute("admin");
@@ -211,6 +221,10 @@ public class BoardController {
         }
         model.addAttribute("liked", liked);
 
+        // 게시글 번호를 이용하여 댓글 목록 조회
+        List<BoardCommentEntity> boardComments = boardService.getCommentsByBoardSeq(boardSeq);
+        model.addAttribute("boardComments", boardComments);
+
         return "board_view";
     }
 
@@ -228,8 +242,6 @@ public class BoardController {
     // 게시물 업데이트 페이지 이동
     @GetMapping("board/edit/{boardSeq}")
     public String updateBoardPage(Model model, @PathVariable("boardSeq") Long boardSeq, HttpServletRequest httpServletRequest) {
-
-
         BoardResponseDto boardResponseDto = boardService.findByBoardSeq(boardSeq);
         UserDto userDto = userService.findByUserSeq(boardResponseDto.getUserSeq());
         String boardUserId = userDto.getUserId();
@@ -289,13 +301,8 @@ public class BoardController {
             return "redirect:/board/register";
         }
 
-
-
-
-
         return "redirect:/board/" + boardSeq;
     }
-
 
 
 
@@ -304,14 +311,59 @@ public class BoardController {
     @ResponseBody
     public Map<String, Object> toggleLike(@PathVariable Long boardSeq, HttpSession httpSession) {
         Long userSeq = (Long) httpSession.getAttribute("userSeq");
-        String result = boardService.toggleLike(boardSeq, userSeq);
-        int likeCount = boardService.getLikeCount(boardSeq);
+        try {
+            String result = boardService.toggleLike(boardSeq, userSeq);
+            int likeCount = boardService.getLikeCount(boardSeq);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("result", result);
-        response.put("likeCount", likeCount);
-        return response;
+            Map<String, Object> response = new HashMap<>();
+            response.put("result", result);
+            response.put("likeCount", likeCount);
+            return response;
+        } catch (IOException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "존재하지 않는 게시물입니다.");
+            return response;
+        }
     }
+
+
+    // 댓글 작성
+    @PostMapping("/board/{boardSeq}/register_comment")
+    public String registerComment(@PathVariable("boardSeq") Long boardSeq,
+                                  @ModelAttribute BoardCommentRequestDto commentDto,
+                                  HttpServletRequest httpServletRequest,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            HttpSession session = httpServletRequest.getSession(false);
+            if (session != null) {
+                String userId = (String) session.getAttribute("userId");
+                Long userSeq = (Long) session.getAttribute("userSeq");
+                commentDto.setUserId(userId);
+                commentDto.setUserSeq(userSeq);
+            }
+
+            log.info("새로운 댓글 작성: {}", commentDto.getCommentContent());
+            boardService.registerBoardComment(commentDto);
+
+            return "redirect:/board/" + boardSeq;
+
+        } catch (Exception e) {
+            log.error("Error occurred during comment registration: {}", e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("errorMessage", "댓글 작성에 실패했습니다.");
+
+            return "redirect:/board/" + boardSeq;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
 
 
 

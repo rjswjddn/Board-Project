@@ -1,16 +1,12 @@
 package com.example.boardproject.service;
 
-import com.example.boardproject.Constants;
+import com.example.boardproject.ConstantClass.Constants;
+import com.example.boardproject.ConstantClass.ValidationConstants;
+import com.example.boardproject.dto.BoardCommentRequestDto;
 import com.example.boardproject.dto.BoardRequestDto;
 import com.example.boardproject.dto.BoardResponseDto;
-import com.example.boardproject.entity.BoardEntity;
-import com.example.boardproject.entity.BoardImageEntity;
-import com.example.boardproject.entity.BoardLikeEntity;
-import com.example.boardproject.entity.UserEntity;
-import com.example.boardproject.repository.BoardImageRepository;
-import com.example.boardproject.repository.BoardLikeRepository;
-import com.example.boardproject.repository.BoardRepository;
-import com.example.boardproject.repository.UserRepository;
+import com.example.boardproject.entity.*;
+import com.example.boardproject.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +36,7 @@ public class BoardService {
     private final UserRepository userRepository;
     private final BoardImageRepository boardImageRepository;
     private final BoardLikeRepository boardLikeRepository;
+    private final BoardCommentRepository boardCommentRepository;
 
     //공지글
     public List<BoardResponseDto> getNoticeBoardsWithUsers() {
@@ -131,20 +128,22 @@ public class BoardService {
 
 
     public boolean isValidBoardTitle(String boardTitle) {
-        return StringUtils.hasText(boardTitle) && boardTitle.length() <= 45;
+        return StringUtils.hasText(boardTitle) && boardTitle.length() <= ValidationConstants.MAX_BOARD_TITLE_LENGTH;
     }
 
     public boolean isValidContent(String boardContent) {
-        return StringUtils.hasText(boardContent) && boardContent.length() <= 2000;
+        return StringUtils.hasText(boardContent) && boardContent.length() <= ValidationConstants.MAX_BOARD_CONTENT_LENGTH;
     }
 
     // 유효성 검사
-    public void validateBoardRequest(BoardRequestDto boardRequestDto, BindingResult bindingResult) {
+    public void validateBoardRequest(BoardRequestDto boardRequestDto, BindingResult bindingResult) throws IOException {
         if (!isValidBoardTitle(boardRequestDto.getBoardTitle())) {
-            bindingResult.rejectValue("boardTitle", "empty.boardTitle", "제목은 최소 1자에서 최대 45자까지 허용됩니다.");
+            bindingResult.rejectValue("boardTitle", "empty.boardTitle", ValidationConstants.BOARD_TITLE_ERROR_MESSAGE);
+            throw new IOException(ValidationConstants.BOARD_TITLE_ERROR_MESSAGE);
         }
         if (!isValidContent(boardRequestDto.getBoardContent())) {
-            bindingResult.rejectValue("boardContent", "invalid.boardContent", "내용은 최소 1자에서 최대 2000자까지 허용됩니다.");
+            bindingResult.rejectValue("boardContent", "invalid.boardContent", ValidationConstants.BOARD_CONTENT_ERROR_MESSAGE);
+            throw new IOException(ValidationConstants.BOARD_CONTENT_ERROR_MESSAGE);
         }
     }
 
@@ -248,14 +247,21 @@ public class BoardService {
         boardRepository.save(boardEntity);
     }
 
+    public String getImagePathByBoardSeq(Long boardSeq) {
+        return boardImageRepository.getImagePathByBoardSeq(boardSeq);
+    }
 
 
     //좋아요 기능
     @Transactional
-    public String toggleLike(Long boardSeq, Long userSeq) {
-        boolean alreadyLiked = boardLikeRepository.existsByBoardSeqAndUserSeq(boardSeq, userSeq);
+    public String toggleLike(Long boardSeq, Long userSeq) throws IOException {
         BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
+        if (boardEntity == null) {
+            // DB에 해당 boardSeq가 존재하지 않는 경우
+            throw new IOException("존재하지 않는 게시물입니다.");
+        }
 
+        boolean alreadyLiked = boardLikeRepository.existsByBoardSeqAndUserSeq(boardSeq, userSeq);
         if (alreadyLiked) {
             boardLikeRepository.deleteByBoardSeqAndUserSeq(boardSeq, userSeq);
             boardEntity.setLikeCnt(boardEntity.getLikeCnt() - 1);
@@ -273,15 +279,13 @@ public class BoardService {
         return alreadyLiked ? "disliked" : "liked";
     }
 
-    public String getImagePathByBoardSeq(Long boardSeq) {
-        return boardImageRepository.getImagePathByBoardSeq(boardSeq);
-    }
+
     // 사용자가 해당 게시글에 좋아요를 눌렀는지 확인하는 메서드
     public boolean isLiked(Long boardSeq, Long userSeq) {
         return boardLikeRepository.existsByBoardSeqAndUserSeq(boardSeq, userSeq);
     }
 
-    //게시글별 좋아요 갯수 가져오기
+    // 게시글별 좋아요 갯수 가져오기
     public int getLikeCount(Long boardSeq) {
         return boardLikeRepository.countByBoardSeq(boardSeq);
     }
@@ -290,6 +294,35 @@ public class BoardService {
     public void updateViewCnt(Long boardSeq) {
         boardRepository.updateViewCntByBoardSeq(boardSeq);
     }
+
+
+
+    // 댓글 등록
+    @Transactional
+    public void registerBoardComment(BoardCommentRequestDto commentDto) {
+        BoardCommentEntity commentEntity = commentDto.toEntity();
+        boardCommentRepository.save(commentEntity);
+        updateCommentCount(commentDto.getBoardSeq());
+    }
+
+    // 게시글 별 댓글 가져오기
+    public List<BoardCommentEntity> getCommentsByBoardSeq(Long boardSeq) {
+        return boardCommentRepository.findByBoardSeq(boardSeq);
+    }
+
+    // 게시글 별 댓글 수 가져오기 (추후엔 대댓글과도 합쳐서 count해야 함)
+    public void updateCommentCount(Long boardSeq) {
+        int commentCount = boardCommentRepository.countByBoardSeq(boardSeq);
+        BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
+
+        if (boardEntity != null) {
+            boardEntity.setCommentCnt(commentCount);
+            boardRepository.save(boardEntity);
+        }
+    }
+
+
+
 
 
 }
