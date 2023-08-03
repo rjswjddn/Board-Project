@@ -3,14 +3,9 @@ package com.example.boardproject.service;
 import com.example.boardproject.Constants;
 import com.example.boardproject.dto.BoardRequestDto;
 import com.example.boardproject.dto.BoardResponseDto;
-import com.example.boardproject.entity.BoardEntity;
-import com.example.boardproject.entity.BoardImageEntity;
-import com.example.boardproject.entity.BoardLikeEntity;
-import com.example.boardproject.entity.UserEntity;
-import com.example.boardproject.repository.BoardImageRepository;
-import com.example.boardproject.repository.BoardLikeRepository;
-import com.example.boardproject.repository.BoardRepository;
-import com.example.boardproject.repository.UserRepository;
+import com.example.boardproject.dto.CommentDto;
+import com.example.boardproject.entity.*;
+import com.example.boardproject.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +35,7 @@ public class BoardService {
     private final UserRepository userRepository;
     private final BoardImageRepository boardImageRepository;
     private final BoardLikeRepository boardLikeRepository;
-
+    private final BoardCommentRepository boardCommentRepository;
     //공지글
     public List<BoardResponseDto> getNoticeBoardsWithUsers() {
         return boardRepository.findNoticeBoardsWithUsers();
@@ -291,6 +286,18 @@ public class BoardService {
 
         boardRepository.updateViewCntByBoardSeq(boardSeq);
 
+    }
+
+    @Transactional
+    public void updateComment(Long commentSeq, CommentDto commentDto){
+        BoardCommentEntity boardCommentEntity = boardCommentRepository.findByCommentSeq(commentSeq);
+        boardCommentEntity.setCommentContent(commentDto.getCommentContent());
+        boardCommentRepository.save(boardCommentEntity);
+    }
+
+    @Transactional
+    public void deleteComment(Long commentSeq){
+        boardCommentRepository.deleteCommentByCommentSeq(commentSeq);
     }
 
 

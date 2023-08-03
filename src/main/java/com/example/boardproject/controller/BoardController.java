@@ -2,12 +2,12 @@ package com.example.boardproject.controller;
 
 import com.example.boardproject.dto.BoardRequestDto;
 import com.example.boardproject.dto.BoardResponseDto;
+import com.example.boardproject.dto.CommentDto;
 import com.example.boardproject.dto.UserDto;
 import com.example.boardproject.entity.BoardType;
 import com.example.boardproject.service.BoardService;
 import com.example.boardproject.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,10 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -164,7 +167,7 @@ public class BoardController {
 
 
     @GetMapping("board/{boardSeq}")
-    public String viewBoard(@PathVariable("boardSeq") Long boardSeq, Model model, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    public String viewBoard(@PathVariable("boardSeq") Long boardSeq, Model model, HttpServletRequest httpServletRequest) {
         // 조회수 증가
         boardService.updateViewCnt(boardSeq);
 
@@ -312,4 +315,13 @@ public class BoardController {
     }
 
 
+    @DeleteMapping("/board/{commentSeq}")
+    public void deleteComment(@PathVariable("commentSeq") Long commentSeq){
+        boardService.deleteComment(commentSeq);
+    }
+
+    @PutMapping("/board/{commentSeq}")
+    public void updateComment(@PathVariable("commentSeq") Long commentSeq, CommentDto commentDto) {
+        boardService.updateComment(commentSeq, commentDto);
+    }
 }
