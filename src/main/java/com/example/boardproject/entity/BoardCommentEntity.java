@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class BoardCommentEntity {
     @Column(name="comment_content")
     private String commentContent;
 
+    @CreatedDate
     @Column(name="comment_created_date")
     private LocalDateTime commentCreatedDate;
 
