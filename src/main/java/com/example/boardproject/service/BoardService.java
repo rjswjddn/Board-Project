@@ -298,7 +298,7 @@ public class BoardService {
     }
 
     @Transactional
-    public void updateComment(Long commentSeq, CommentDto commentDto){
+    public void updateComment(Long commentSeq, BoardCommentRequestDto commentDto){
         BoardCommentEntity boardCommentEntity = boardCommentRepository.findByCommentSeq(commentSeq);
         boardCommentEntity.setCommentContent(commentDto.getCommentContent());
         boardCommentRepository.save(boardCommentEntity);

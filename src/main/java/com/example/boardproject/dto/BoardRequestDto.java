@@ -2,7 +2,6 @@ package com.example.boardproject.dto;
 
 import com.example.boardproject.entity.BoardEntity;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Transient;
 
@@ -33,7 +32,6 @@ public class BoardRequestDto {
 
     private Boolean boardStatus = false;
 
-    @CreatedDate
     private LocalDateTime boardCreatedDate;
 
     @LastModifiedDate
@@ -63,6 +61,7 @@ public class BoardRequestDto {
                 .imageYn(this.imageYn)
                 .boardStatus(this.boardStatus)
                 .boardCreatedDate(this.boardCreatedDate)
+                .boardUpdatedDate(this.boardUpdatedDate)
                 .userSeq(this.userSeq)
                 .build();
 
