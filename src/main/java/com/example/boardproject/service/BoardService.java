@@ -2,9 +2,7 @@ package com.example.boardproject.service;
 
 import com.example.boardproject.ConstantClass.Constants;
 import com.example.boardproject.ConstantClass.ValidationConstants;
-import com.example.boardproject.dto.BoardCommentRequestDto;
-import com.example.boardproject.dto.BoardRequestDto;
-import com.example.boardproject.dto.BoardResponseDto;
+import com.example.boardproject.dto.*;
 import com.example.boardproject.entity.*;
 import com.example.boardproject.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +35,7 @@ public class BoardService {
     private final BoardImageRepository boardImageRepository;
     private final BoardLikeRepository boardLikeRepository;
     private final BoardCommentRepository boardCommentRepository;
+    private final BoardReplyRepository boardReplyRepository;
 
     //공지글
     public List<BoardResponseDto> getNoticeBoardsWithUsers() {
@@ -238,9 +237,42 @@ public class BoardService {
 
 
     public void updateViewCnt(Long boardSeq) {
-
         boardRepository.updateViewCntByBoardSeq(boardSeq);
+    }
 
+
+
+    // 댓글 작성
+    @Transactional
+    public void registerBoardComment(BoardCommentRequestDto commentDto) {
+        BoardCommentEntity commentEntity = commentDto.toEntity();
+        boardCommentRepository.save(commentEntity);
+        updateCommentCount(commentDto.getBoardSeq());
+    }
+
+    // 게시글 별 댓글 가져오기
+    public List<BoardCommentEntity> getCommentsByBoardSeq(Long boardSeq) {
+        return boardCommentRepository.findByBoardSeq(boardSeq);
+    }
+
+    public List<BoardReplyEntity> getRepliesByCommentSeq(Long commentSeq) {
+        return boardReplyRepository.findByCommentSeq(commentSeq);
+    }
+
+
+//    public List<CommentReplyResponseDto> getCommentsAndRepliesByBoardSeq(Long boardSeq) {
+//        return boardCommentRepository.findCommentsAndRepliesByBoardSeq(boardSeq);
+//    }
+
+    // 게시글 별 댓글 수 가져오기 (추후엔 대댓글과도 합쳐서 count해야 함)
+    public void updateCommentCount(Long boardSeq) {
+        int commentCount = boardCommentRepository.countByBoardSeq(boardSeq);
+        BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
+
+        if (boardEntity != null) {
+            boardEntity.setCommentCnt(commentCount);
+            boardRepository.save(boardEntity);
+        }
     }
 
     @Transactional
@@ -256,30 +288,19 @@ public class BoardService {
     }
 
 
-
-    // 댓글 등록
+    // 대댓글 작성
     @Transactional
-    public void registerBoardComment(BoardCommentRequestDto commentDto) {
-        BoardCommentEntity commentEntity = commentDto.toEntity();
-        boardCommentRepository.save(commentEntity);
-        updateCommentCount(commentDto.getBoardSeq());
+    public void registerBoardReply(BoardReplyRequestDto replyDto) {
+        BoardReplyEntity replyEntity = replyDto.toEntity();
+        boardReplyRepository.save(replyEntity);
+
     }
 
-    // 게시글 별 댓글 가져오기
-    public List<BoardCommentEntity> getCommentsByBoardSeq(Long boardSeq) {
-        return boardCommentRepository.findByBoardSeq(boardSeq);
-    }
 
-    // 게시글 별 댓글 수 가져오기 (추후엔 대댓글과도 합쳐서 count해야 함)
-    public void updateCommentCount(Long boardSeq) {
-        int commentCount = boardCommentRepository.countByBoardSeq(boardSeq);
-        BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
 
-        if (boardEntity != null) {
-            boardEntity.setCommentCnt(commentCount);
-            boardRepository.save(boardEntity);
-        }
-    }
+
+
+
 
 
 

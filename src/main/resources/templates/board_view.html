@@ -72,33 +72,16 @@
           </div>
         </div>
 
-        <!-- 댓글 작성란 -->
-        <div class="card mb-4">
-          <div class="card-body">
-            <form id="commentForm" class="form-horizontal" th:action="@{/board/{boardSeq}/register_comment(boardSeq=${boardResponseDto.boardSeq})}" method="post">
-              <div class="row">
-                <input type="hidden" name="parentCommentSeq" id="parentCommentSeq" value="">
-                <div class="form-group col-sm-10">
-                  <input class="form-control input-sm" type="text" id="comment" name="commentContent" placeholder="댓글 입력...">
-                </div>
-                <div class="form-group col-sm-2">
-                  <button type="submit" class="btn btn-primary">댓글 작성</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
 
         <!-- 댓글 목록 -->
         <div class="card card-primary card-outline">
-          <div class="card-body repliesDiv">
+          <div class="card-body repliesDiv" id="commentsContainer">
             <h4><span th:text="${boardResponseDto.commentCnt} + ' Comments'"></span></h4>
-            <hr> <!-- 분리선 추가 -->
-            <div  th:each="comments : ${boardComments}">
-            <span>
-              <p th:text="${comments.userSeq} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
-
-              <p th:id="'comment-content-'+${comments.commentSeq}" th:text="${comments.commentContent}"></p>
+            <div th:each="comments : ${boardComments}">
+              <hr> <!-- 분리선 추가 -->
+              <span>
+                <p th:text="${comments.userSeq} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                <p th:id="'comment-content-'+${comments.commentSeq}" th:text="${comments.commentContent}"></p>
               <form class="form-horizontal" th:id="'updateForm'+${comments.commentSeq}" style="display: none" >
                 <div class="form-group">
                     <textarea class="form-control" rows="3" id="comment-content" th:text="${comments.commentContent}"></textarea>
@@ -106,16 +89,66 @@
                 <button class="btn btn-sm btn-light" type="button" th:onclick="updateCheck([[${comments.commentSeq}]])">확인</button>
                 <button class="btn btn-sm btn-light" type="button" th:onclick="updateCancel([[${comments.commentSeq}]])">취소</button>
               </form>
-              <button class="btn btn-sm btn-primary" onclick="replyToComment('${comments.commentSeq}')">답글 달기</button>
-              <button th:if="${comments.userSeq == session.userSeq}" type="button" class="btn btn-sm btn-primary" th:onclick="updateComment([[${comments.commentSeq}]])">수정</button>
+                <button class="btn btn-sm btn-primary"
+                       th:attr="data-commentseq=${comments.commentSeq}"
+                       onclick="toggleReplyForm(this.getAttribute('data-commentseq'))">답글 달기</button>
+                <button th:if="${comments.userSeq == session.userSeq}" type="button" class="btn btn-sm btn-primary" th:onclick="updateComment([[${comments.commentSeq}]])">수정</button>
               <button th:if="${comments.userSeq == session.userSeq}" class="btn btn-sm btn-primary"
                       th:onclick="deleteComment([[${comments.commentSeq}]])">삭제</button>
-              <hr> <!-- 댓글 사이에 분리선 추가 -->
+
+                <!-- 답글 작성란 -->
+                <div class="reply_create" style="display: none;" th:id="'reply_create_' + ${comments.commentSeq}">
+                  <p class="form_wrap">
+                    <span class="textarea_edit">
+                      <div class="card mb-4">
+                        <div class="card-body">
+                          <form id="replyForm" class="form-horizontal"
+                                th:action="@{/board/{boardSeq}/{commentSeq}/register_reply(boardSeq=${boardResponseDto.boardSeq}, commentSeq=${comments.commentSeq})}"
+                                method="post">
+                            <div class="row">
+                              <div class="form-group col-sm-10">
+                                <input class="form-control input-sm" type="text" id="reply" name="replyContent"
+                                       placeholder="댓글 입력...">
+                              </div>
+                              <div class="form-group col-sm-2">
+                                <button type="submit" class="btn btn-primary">답글 작성</button>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </span>
+                  </p>
+                  <hr> <!-- 댓글 사이에 분리선 추가 -->
+                </div>
+                <!-- 답글 목록 -->
+                <div th:each="reply : ${boardReplies}" th:if="${reply.commentSeq == comments.commentSeq}">
+                  <p th:text="${reply.loginId} + ' ' + ${#temporals.format(reply.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                  <p th:text="${reply.commentContent}"></p>
+                </div>
+
             </span>
             </div>
           </div>
         </div>
 
+        <!-- 댓글 작성란 -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <form id="commentForm" class="form-horizontal" th:action="@{/board/{boardSeq}/register_comment(boardSeq=${boardResponseDto.boardSeq})}"
+                  method="post" th:data-boardseq="${boardResponseDto.boardSeq}">
+              <div class="row">
+                <input type="hidden" name="parentCommentSeq" id="parentCommentSeq" value="">
+                <div class="form-group col-sm-10">
+                  <input class="form-control input-sm" type="text" id="comment" name="commentContent" placeholder="댓글 입력...">
+                </div>
+                <div class="form-group col-sm-2">
+                  <button type="button" class="btn btn-primary" onclick="submitComment()" >댓글 작성</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
 
       </div>
     </main>
@@ -191,6 +224,74 @@
               });
     });
   });
+
+  // 댓글 작성
+  function submitComment() {
+    var formData = $('#commentForm').serialize(); // Get form data
+    var boardSeq = $('#commentForm').data('boardseq');
+    console.log('boardSeq:', boardSeq);
+    $.ajax({
+      type: 'POST',
+      url: $('#commentForm').attr('action'),
+      data: formData,
+      success: function(response) {
+        console.log("댓글 작성 성공:", response);
+        $('#comment').val('');
+        reloadCommentsContainer();
+
+        // loadComments(boardSeq);
+      },
+      error: function(error) {
+        console.error("댓글 작성 실패:", error);
+      }
+    });
+  }
+
+  // 댓글 목록만 리로딩
+  function reloadCommentsContainer() {
+    $('#commentsContainer').load(location.href+' #commentsContainer');
+  }
+
+  function loadComments(boardSeq) {
+    $.ajax({
+      type: 'GET',
+      url: '/board/' + boardSeq + '/comments',
+      dataType: 'json',
+      success: function(response) {
+        $('#commentsContainer').empty();
+        $.each(response, function(index, comment) {
+          var html = '<div class="comment-item">';
+          html += '<p>' + comment.loginId + ' ' + comment.commentCreatedDate + '</p>';
+          html += '<p>' + comment.commentContent + '</p>';
+
+          html += '</div>';
+          $('#commentsContainer').append(html);
+        });
+      },
+      error: function(error) {
+        console.error("댓글 로딩 실패:", error);
+      }
+    });
+  }
+
+  // 답글 창 열기
+  function toggleReplyForm(commentSeq) {
+    console.log('CommentSeq:', commentSeq);
+    var replyForm = document.getElementById(`reply_create_${commentSeq}`);
+    console.log('ReplyForm:', replyForm);
+
+    if (replyForm) {
+      if (replyForm.style.display === 'none') {
+        replyForm.style.display = 'block';
+      } else {
+        replyForm.style.display = 'none';
+      }
+    } else {
+      console.log('ReplyForm is null.');
+    }
+  }
+
+
 
   function updateComment(commentSeq){
     document.getElementById("updateForm"+commentSeq).style.display ='block'
