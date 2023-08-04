@@ -82,18 +82,21 @@
               <span>
                 <p th:text="${comments.userSeq} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
                 <p th:id="'comment-content-'+${comments.commentSeq}" th:text="${comments.commentContent}"></p>
-              <form class="form-horizontal" th:id="'updateForm'+${comments.commentSeq}" style="display: none" >
+              <form class="form-horizontal" th:id="'updateForm'+${comments.commentSeq}" style="display: none">
                 <div class="form-group">
-                    <textarea class="form-control" rows="3" id="comment-content" th:text="${comments.commentContent}"></textarea>
+                    <textarea class="form-control" rows="3" th:id="'comment-update-'+${comments.commentSeq}"
+                              th:text="${comments.commentContent}"></textarea>
                 </div>
                 <button class="btn btn-sm btn-light" type="button" th:onclick="updateCheck([[${comments.commentSeq}]])">확인</button>
-                <button class="btn btn-sm btn-light" type="button" th:onclick="updateCancel([[${comments.commentSeq}]])">취소</button>
+                <button class="btn btn-sm btn-light" type="button"
+                        th:onclick="updateCancel([[${comments.commentSeq}]])">취소</button>
               </form>
                 <button class="btn btn-sm btn-primary"
-                       th:attr="data-commentseq=${comments.commentSeq}"
-                       onclick="toggleReplyForm(this.getAttribute('data-commentseq'))">답글 달기</button>
-                <button th:if="${comments.userSeq == session.userSeq}" type="button" class="btn btn-sm btn-primary" th:onclick="updateComment([[${comments.commentSeq}]])">수정</button>
-              <button th:if="${comments.userSeq == session.userSeq}" class="btn btn-sm btn-primary"
+                        th:attr="data-commentseq=${comments.commentSeq}"
+                        onclick="toggleReplyForm(this.getAttribute('data-commentseq'))">답글 달기</button>
+                <button th:if="${comments.userSeq == session.userSeq || session.admin}" type="button" class="btn btn-sm btn-primary"
+                        th:onclick="updateComment([[${comments.commentSeq}]])">수정</button>
+              <button th:if="${comments.userSeq == session.userSeq || session.admin}" class="btn btn-sm btn-primary"
                       th:onclick="deleteComment([[${comments.commentSeq}]])">삭제</button>
 
                 <!-- 답글 작성란 -->
@@ -301,7 +304,7 @@
     document.getElementById("updateForm"+commentSeq).style.display ='none'
   };
   function updateCheck(commentSeq){
-    let commentContents = document.getElementById("comment-content").value;
+    let commentContents = document.getElementById("comment-update-"+commentSeq).value;
     console.log(commentContents);
     if(commentContents.trim() === ""){
       alert("공백은 입력할 수 없습니다.")
@@ -334,7 +337,7 @@
         dataType: 'JSON',
         contentType: 'application/json; charset=utf-8',
       }).done(function (){
-        $('#commentList').load(location.href+' #commentList');
+        reloadCommentsContainer();
       }).fail(function(error){
         alert(JSON.stringify(error));
       });
