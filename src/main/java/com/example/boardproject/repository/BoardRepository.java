@@ -40,14 +40,14 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
     //boardContent로 검색
     @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
-            "WHERE lower(b.boardContent) like %:keyword% " +
+            "WHERE b.boardType != 'S' AND b.boardStatus = false AND lower(b.boardContent) like %:keyword% " +
             "ORDER BY b.boardSeq DESC")
     Page<BoardResponseDto> findByBoardContentContainingIgnoreCaseOrderByBoardSeqDesc(@Param("keyword") String keyword, Pageable pageable);
 
     //boardTitle로 검색
     @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
-            "WHERE b.boardTitle LIKE %:titleKeyword% " +
+            "WHERE b.boardType != 'S' AND b.boardStatus = false AND b.boardTitle LIKE %:titleKeyword% " +
             "ORDER BY b.boardSeq DESC")
     Page<BoardResponseDto> findByBoardTitleContainingIgnoreCaseOrderByBoardSeqDesc(@Param("titleKeyword") String titleKeyword, Pageable pageable);
 

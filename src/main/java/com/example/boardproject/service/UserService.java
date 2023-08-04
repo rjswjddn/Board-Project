@@ -49,7 +49,6 @@ public class UserService {
         return userDto;
     }
 
-
     public boolean getUserAdminByUserId(String userId) {
         return userRepository.getUserAdminByUserId(userId);
     }
