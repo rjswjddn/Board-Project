@@ -48,9 +48,6 @@ public class BoardResponseDto {
         return BoardType.valueOf(boardType);
     }
 
-    public void setBoardTypeEnum(BoardType boardType) {
-        this.boardType = boardType.name();
-    }
 
     public BoardResponseDto(BoardEntity boardEntity) {
         this.boardSeq = boardEntity.getBoardSeq();

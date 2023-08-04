@@ -1,8 +1,6 @@
 package com.example.boardproject.controller;
 
 import com.example.boardproject.dto.*;
-import com.example.boardproject.entity.BoardCommentEntity;
-import com.example.boardproject.entity.BoardReplyEntity;
 import com.example.boardproject.entity.BoardType;
 import com.example.boardproject.service.BoardService;
 import com.example.boardproject.service.UserService;
@@ -233,8 +231,14 @@ public class BoardController {
         model.addAttribute("liked", liked);
 
         // 게시글 번호를 이용하여 댓글 목록 조회
-        List<BoardCommentEntity> boardComments = boardService.getCommentsByBoardSeq(boardSeq);
-        model.addAttribute("boardComments", boardComments);
+//        List<BoardCommentEntity> boardComments = boardService.getCommentsByBoardSeq(boardSeq);
+//        model.addAttribute("boardComments", boardComments);
+
+        List<BoardCommentResponseDto> boardResponseDtos = boardService.getCommentsByBoardSeqWithUserId(boardSeq);
+        model.addAttribute("boardComments", boardResponseDtos);
+
+        // userSeq로 댓글 작성자 ID 불러오기
+
 
         return "board_view";
     }
@@ -372,42 +376,6 @@ public class BoardController {
 
 
     // 댓글 작성
-//    @PostMapping("/board/{boardSeq}/register_comment")
-//    public String registerComment(@PathVariable("boardSeq") Long boardSeq,
-//                                  @ModelAttribute BoardCommentRequestDto commentDto,
-//                                  HttpServletRequest httpServletRequest,
-//                                  RedirectAttributes redirectAttributes) {
-//        try {
-//            HttpSession session = httpServletRequest.getSession(false);
-//            if (session != null) {
-//                String userId = (String) session.getAttribute("userId");
-//                Long userSeq = (Long) session.getAttribute("userSeq");
-//                commentDto.setUserId(userId);
-//                commentDto.setUserSeq(userSeq);
-//            }
-//
-//            log.info("새로운 댓글 작성: {}", commentDto.getCommentContent());
-//            boardService.registerBoardComment(commentDto);
-//
-//            // 댓글 작성 완료 후, 리다이렉트하지 않고, 댓글 목록만 비동기로 업데이트
-//            return "board/comments";
-//
-//        } catch (Exception e) {
-//            log.error("Error occurred during comment registration: {}", e.getMessage(), e);
-//            redirectAttributes.addFlashAttribute("errorMessage", "댓글 작성에 실패했습니다.");
-//
-//            return "redirect:/board/" + boardSeq;
-//        }
-//    }
-
-//    @GetMapping("/board/{boardSeq}/comments")
-//    public String getComments(@PathVariable("boardSeq") Long boardSeq, Model model) {
-//        // 게시글 번호를 이용하여 댓글 목록 조회
-//        List<BoardCommentEntity> boardComments = boardService.getCommentsByBoardSeq(boardSeq);
-//        model.addAttribute("boardComments", boardComments);
-//        return "board_view";
-//    }
-
     @PostMapping("/board/{boardSeq}/register_comment")
     @ResponseBody
     public ResponseEntity<String> registerComment(@PathVariable("boardSeq") Long boardSeq,
@@ -433,16 +401,16 @@ public class BoardController {
         }
     }
 
-    @GetMapping("/board/{boardSeq}/comments")
-    public ResponseEntity<List<BoardCommentEntity>> getCommentsByBoardSeq(@PathVariable("boardSeq") Long boardSeq) {
-        List<BoardCommentEntity> boardComments = boardService.getCommentsByBoardSeq(boardSeq);
-        return ResponseEntity.ok(boardComments);
-    }
+//    @GetMapping("/board/{boardSeq}/comments")
+//    public ResponseEntity<List<BoardCommentEntity>> getCommentsByBoardSeq(@PathVariable("boardSeq") Long boardSeq) {
+//        List<BoardCommentEntity> boardComments = boardService.getCommentsByBoardSeq(boardSeq);
+//        return ResponseEntity.ok(boardComments);
+//    }
 
-    @GetMapping("/board/{boardSeq}/replies/{commentSeq}")
-    @ResponseBody
-    public List<BoardReplyEntity> getRepliesByCommentSeq(@PathVariable Long commentSeq) {
-        return boardService.getRepliesByCommentSeq(commentSeq);
+    @GetMapping("/board/{boardSeq}/comments")
+    public ResponseEntity<List<BoardCommentResponseDto>> getCommentsByBoardSeq(@PathVariable("boardSeq") Long boardSeq) {
+        List<BoardCommentResponseDto> boardComments  = boardService.getCommentsByBoardSeqWithUserId(boardSeq);
+        return ResponseEntity.ok(boardComments);
     }
 
 
@@ -467,6 +435,32 @@ public class BoardController {
             return new ResponseEntity<>(boardService.getCommentContent(commentSeq), HttpStatus.FORBIDDEN);
         }
     }
+
+//    @PostMapping("/board/{boardSeq}/{commentSeq}/register_reply")
+//    @ResponseBody
+//    public ResponseEntity<String> registerReply(@PathVariable("boardSeq") Long boardSeq,
+//                                                @PathVariable("commentSeq") Long commentSeq,
+//                                                @ModelAttribute BoardReplyRequestDto replyDto,
+//                                                HttpServletRequest httpServletRequest) {
+//        try {
+//            HttpSession session = httpServletRequest.getSession(false);
+//            if (session != null) {
+//                String userId = (String) session.getAttribute("userId");
+//                Long userSeq = (Long) session.getAttribute("userSeq");
+//                replyDto.setUserId(userId);
+//                replyDto.setUserSeq(userSeq);
+//            }
+//
+//            log.info("새로운 대댓글 작성: {}", replyDto.getReplyContent());
+//            boardService.registerBoardReply(replyDto);
+//
+//            return ResponseEntity.ok("success");
+//
+//        } catch (Exception e) {
+//            log.error("Error occurred during comment registration: {}", e.getMessage(), e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("대댓글 작성에 실패했습니다.");
+//        }
+//    }
 
     //대댓글 작성
     @PostMapping("/board/{boardSeq}/{commentSeq}/register_reply")
@@ -496,13 +490,6 @@ public class BoardController {
             return "redirect:/board/" + boardSeq;
         }
     }
-
-
-
-
-
-
-
 
 
 
