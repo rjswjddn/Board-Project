@@ -72,16 +72,32 @@
           </div>
         </div>
 
-
         <!-- 댓글 목록 -->
         <div class="card card-primary card-outline">
           <div class="card-body repliesDiv" id="commentsContainer">
             <h4><span th:text="${boardResponseDto.commentCnt} + ' Comments'"></span></h4>
+
             <div th:each="comments : ${boardComments}">
               <hr> <!-- 분리선 추가 -->
               <span>
-                <p th:text="${comments.userSeq} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
-                <p th:id="'comment-content-'+${comments.commentSeq}" th:text="${comments.commentContent}"></p>
+<!--                댓글-->
+                <div id="commentContainer">
+                  <p th:text="${comments.userId} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                  <p th:id="'comment-content-'+${comments.commentSeq}" th:text="${comments.commentContent}"></p>
+                </div>
+
+<!--                대댓글-->
+                <div id="replyContainer">
+                  <div th:if="${comments.boardReplyResponseDtoList}">
+                    <div th:each="reply : ${comments.boardReplyResponseDtoList}">
+                      <div style="margin-left: 40px;"> <!-- 들여쓰기 -->
+                      <p th:text="${reply.userId} + ' ' + ${#temporals.format(reply.replyCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                      <p th:text="${reply.replyContent}"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               <form class="form-horizontal" th:id="'updateForm'+${comments.commentSeq}" style="display: none">
                 <div class="form-group">
                     <textarea class="form-control" rows="3" th:id="'comment-update-'+${comments.commentSeq}"
@@ -107,14 +123,16 @@
                         <div class="card-body">
                           <form id="replyForm" class="form-horizontal"
                                 th:action="@{/board/{boardSeq}/{commentSeq}/register_reply(boardSeq=${boardResponseDto.boardSeq}, commentSeq=${comments.commentSeq})}"
-                                method="post">
+                                method="post" th:data-boardseq="${boardResponseDto.boardSeq}" th:data-commentseq="${comments.commentSeq}">
                             <div class="row">
                               <div class="form-group col-sm-10">
                                 <input class="form-control input-sm" type="text" id="reply" name="replyContent"
                                        placeholder="댓글 입력...">
                               </div>
                               <div class="form-group col-sm-2">
-                                <button type="submit" class="btn btn-primary">답글 작성</button>
+                                <button type="submit" class="btn btn-primary" >답글 작성</button>
+<!--                                <button type="button" class="btn btn-primary" onclick="submitReply()">답글 작성</button>-->
+
                               </div>
                             </div>
                           </form>
@@ -122,13 +140,8 @@
                       </div>
                     </span>
                   </p>
-                  <hr> <!-- 댓글 사이에 분리선 추가 -->
                 </div>
-                <!-- 답글 목록 -->
-                <div th:each="reply : ${boardReplies}" th:if="${reply.commentSeq == comments.commentSeq}">
-                  <p th:text="${reply.loginId} + ' ' + ${#temporals.format(reply.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
-                  <p th:text="${reply.commentContent}"></p>
-                </div>
+
 
             </span>
             </div>
@@ -137,7 +150,7 @@
 
         <!-- 댓글 작성란 -->
         <div class="card mb-4">
-          <div class="card-body">
+          <div class="card-body" id="commentFormContainer" >
             <form id="commentForm" class="form-horizontal" th:action="@{/board/{boardSeq}/register_comment(boardSeq=${boardResponseDto.boardSeq})}"
                   method="post" th:data-boardseq="${boardResponseDto.boardSeq}">
               <div class="row">
@@ -161,6 +174,7 @@
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script>
   $(document).ready(function () {
 
@@ -230,7 +244,7 @@
 
   // 댓글 작성
   function submitComment() {
-    var formData = $('#commentForm').serialize(); // Get form data
+    var formData = $('#commentForm').serialize();
     var boardSeq = $('#commentForm').data('boardseq');
     console.log('boardSeq:', boardSeq);
     $.ajax({
@@ -262,13 +276,18 @@
       dataType: 'json',
       success: function(response) {
         $('#commentsContainer').empty();
-        $.each(response, function(index, comment) {
-          var html = '<div class="comment-item">';
-          html += '<p>' + comment.loginId + ' ' + comment.commentCreatedDate + '</p>';
-          html += '<p>' + comment.commentContent + '</p>';
 
-          html += '</div>';
-          $('#commentsContainer').append(html);
+        $.each(response, function(index, comment) {
+          console.log("댓글:", response);
+          var userIdAndDate = comment.userId + ' ' + moment(comment.commentCreatedDate).format('YYYY-MM-DD HH:mm');
+          var commentContentId = 'comment-content-' + comment.commentSeq;
+
+          var p1 = $('<p>').text(userIdAndDate);
+          var p2 = $('<p>').attr('id', commentContentId).text(comment.commentContent);
+          var div = $('<div>').addClass('commentContainer').append(p1, p2);
+
+          $('#commentsContainer').append(div);
+
         });
       },
       error: function(error) {
@@ -292,6 +311,27 @@
     } else {
       console.log('ReplyForm is null.');
     }
+  }
+
+  function submitReply() {
+    var formData = $('#replyForm').serialize();
+    var boardSeq = $('#replyForm').data('boardseq');
+    var commentSeq = $('#replyForm').data('commentseq');
+    console.log('formData:', formData);
+    $.ajax({
+      type: 'POST',
+      url: $('#replyForm').attr('action'),
+      data: formData,
+      success: function(response) {
+        console.log("대댓글 작성 성공:", response);
+        $('#reply').val('');
+        reloadCommentsContainer();
+
+      },
+      error: function(error) {
+        console.error("대댓글 작성 실패:", error);
+      }
+    });
   }
 
 

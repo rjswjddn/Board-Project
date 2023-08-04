@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -158,6 +159,8 @@ public class BoardService {
 
     }
 
+
+
     // Seq로 게시물을 찾아 board_status를 0으로 변경
     @Transactional
     public void deleteBoard(Long boardSeq) {
@@ -235,7 +238,7 @@ public class BoardService {
         return boardLikeRepository.countByBoardSeq(boardSeq);
     }
 
-
+    // 조회수
     public void updateViewCnt(Long boardSeq) {
         boardRepository.updateViewCntByBoardSeq(boardSeq);
     }
@@ -255,18 +258,36 @@ public class BoardService {
         return boardCommentRepository.findByBoardSeq(boardSeq);
     }
 
-    public List<BoardReplyEntity> getRepliesByCommentSeq(Long commentSeq) {
-        return boardReplyRepository.findByCommentSeq(commentSeq);
+    public List<BoardCommentResponseDto> getCommentsByBoardSeqWithUserId(Long boardSeq) {
+        // boardSeq로 댓글 리스트로 가져오기
+        // boardSeq로 대댓글 리스트로 가져오(user id가 필요한 경우 여기서 추가해서 붙이기)
+        // 대댓글 리스트의 숫자만큼 반복돌면서 댓글 리스트에 리스트를 붙이기
+        List<BoardCommentResponseDto> boardCommentsWithUserId = boardCommentRepository.findBoardCommentsWithUserId(boardSeq);
+        List<BoardReplyResponseDto> byCommentSeq = boardReplyRepository.findBoardReplyWithUserId(boardSeq);
+
+        for (BoardReplyResponseDto entity : byCommentSeq) {
+            Long commentSeq = entity.getCommentSeq();
+            for (BoardCommentResponseDto dto : boardCommentsWithUserId) {
+                if (Objects.equals(dto.getCommentSeq(), commentSeq)) {
+                    log.info("111111111111111111111111111111");
+                    dto.getBoardReplyResponseDtoList().add(entity);
+                    break;
+                }
+            }
+        }
+
+        log.info(boardCommentsWithUserId.toString());
+
+        return boardCommentsWithUserId;
     }
 
 
-//    public List<CommentReplyResponseDto> getCommentsAndRepliesByBoardSeq(Long boardSeq) {
-//        return boardCommentRepository.findCommentsAndRepliesByBoardSeq(boardSeq);
-//    }
-
     // 게시글 별 댓글 수 가져오기 (추후엔 대댓글과도 합쳐서 count해야 함)
     public void updateCommentCount(Long boardSeq) {
-        int commentCount = boardCommentRepository.countByBoardSeq(boardSeq);
+        List<BoardCommentEntity> commentEntityList = boardCommentRepository.findByBoardSeq(boardSeq);
+        int commentCount = commentEntityList.size();
+
+//        int commentCount = boardCommentRepository.countByBoardSeq(boardSeq);
         BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
 
         if (boardEntity != null) {
