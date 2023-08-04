@@ -88,7 +88,7 @@
 <!--                댓글-->
                 <div id="commentContainer" >
                   <div class="row">
-                    <p class="col-md-9" th:text="${comments.userSeq} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                    <p class="col-md-9" th:text="${comments.userId} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
                     <p th:if="${comments.commentUpdatedDate}" class="col-md-3" th:text="' 수정 : ' + ${#temporals.format(comments.commentUpdatedDate, 'yyyy-MM-dd HH:mm')}"></p>
                   </div>
                   <p th:id="'comment-content-'+${comments.commentSeq}" th:text="${comments.commentContent}"></p>
