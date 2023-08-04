@@ -38,10 +38,6 @@ public class UserService {
         return userDto;
     }
 
-    public Long findUserSeqByUserId(String userId) {
-        return userRepository.findUserSeqByUserId(userId);
-    }
-
 
     // seq로 유저를 찾아 dto에 저장하고 반환
     public UserDto findByUserSeq(Long userSeq) {
@@ -49,15 +45,6 @@ public class UserService {
         return userDto;
     }
 
-
-    public boolean getUserAdminByUserId(String userId) {
-        return userRepository.getUserAdminByUserId(userId);
-    }
-
-//    public boolean isAdminUser(String userId) {
-//        int userAdmin = getUserAdminByUserId(userId);
-//        return userAdmin == 1;
-//    }
 
 
 }
