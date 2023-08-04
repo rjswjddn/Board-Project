@@ -233,7 +233,18 @@ public class BoardController {
 
     // 게시물 삭제
     @DeleteMapping("board/{boardSeq}")
-    public String deleteBoard(Model model, @PathVariable("boardSeq") Long boardSeq) {
+    public String deleteBoard(Model model, @PathVariable("boardSeq") Long boardSeq, HttpServletRequest httpServletRequest) {
+        BoardResponseDto boardResponseDto = boardService.findByBoardSeq(boardSeq);
+        HttpSession session = httpServletRequest.getSession();
+        // 현재 로그인 중인 유저 권한
+        boolean isAdmin = (boolean) session.getAttribute("admin");
+
+        // 게시글에 대한 권한이 없으면 리스트로 돌아감
+        if(!isAdmin && !boardResponseDto.getUserSeq().equals(session.getAttribute("userSeq"))){
+            model.addAttribute("message", "삭제 권한이 없습니다.");
+            model.addAttribute("url", "/board");
+            return "/alert";
+        }
         log.info("delete board   boardSeq: {}", boardSeq);
         boardService.deleteBoard(boardSeq);
 
@@ -252,6 +263,13 @@ public class BoardController {
         HttpSession session = httpServletRequest.getSession();
         // 현재 로그인 중인 유저 권한
         boolean isAdmin = (boolean) session.getAttribute("admin");
+
+        // 게시글에 대한 권한이 없으면 리스트로 돌아감
+        if(!isAdmin && !boardResponseDto.getUserSeq().equals(session.getAttribute("userSeq"))){
+            model.addAttribute("message", "수정 권한이 없습니다.");
+            model.addAttribute("url", "/board");
+            return "/alert";
+        }
 
         if (boardResponseDto.isImageYn()) {
             String imagePath = boardService.getImagePathByBoardSeq(boardResponseDto.getBoardSeq());
@@ -407,15 +425,18 @@ public class BoardController {
 
 
 
-
-    @DeleteMapping("/board/{commentSeq}")
-    public void deleteComment(@PathVariable("commentSeq") Long commentSeq){
+    @ResponseBody
+    @DeleteMapping("/board/comment/{commentSeq}")
+    public Long deleteComment(@PathVariable("commentSeq") @RequestBody Long commentSeq){
         boardService.deleteComment(commentSeq);
+        return commentSeq;
     }
 
-    @PutMapping("/board/{commentSeq}")
-    public void updateComment(@PathVariable("commentSeq") Long commentSeq, BoardCommentRequestDto commentDto) {
-        boardService.updateComment(commentSeq, commentDto);
+    @ResponseBody
+    @PutMapping("/board/comment/{commentSeq}")
+    public String updateComment(@PathVariable("commentSeq") Long commentSeq, @RequestBody String commentContent) {
+        boardService.updateComment(commentSeq, commentContent);
+        return commentContent;
     }
 
     //대댓글 작성

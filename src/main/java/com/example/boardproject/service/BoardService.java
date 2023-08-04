@@ -82,6 +82,38 @@ public class BoardService {
         return searchResult;
     }
 
+    // 이미지 저장 메소드
+    public void saveImage(MultipartFile file, BoardEntity boardEntity ) throws IOException{
+        if (file.getSize() > 20 * 1024 * 1024) {
+            throw new IOException("파일 크기는 최대 20MB까지 허용됩니다.");
+        }
+
+        // 파일 확장자 확인 (이미지 파일 여부 체크)
+        String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
+        boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
+        if (!isAllowedExtension) {
+
+            throw new IOException("이미지 파일만 업로드 가능합니다.");
+        }
+
+        // 이미지 파일 저장 경로 설정
+        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename().replace("//", "");
+        String imagePath = uploadDirectory + fileName;
+        Path imageFilePath = Paths.get(imagePath);
+
+        Files.createDirectories(imageFilePath.getParent());
+        Files.write(imageFilePath, file.getBytes());
+
+        // 이미지 정보 저장 (board_image)
+        BoardImageEntity boardImage = new BoardImageEntity();
+        boardImage.setBoardSeq(boardEntity.getBoardSeq());
+        boardImage.setImagePath(imagePath);
+        boardImage.setImageName(file.getOriginalFilename());
+        boardImageRepository.save(boardImage);
+
+        // board 테이블의 imageYn 속성을 true로 설정
+        boardEntity.setImageYn(true);
+    }
 
     //게시물 등록
     @Transactional
@@ -92,35 +124,7 @@ public class BoardService {
         // 이미지 파일 업로드 처리
         if (!file.isEmpty()) {
             // 파일 크기 확인
-            if (file.getSize() > 20 * 1024 * 1024) {
-                throw new IOException("파일 크기는 최대 20MB까지 허용됩니다.");
-            }
-
-            // 파일 확장자 확인 (이미지 파일 여부 체크)
-            String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-            boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
-            if (!isAllowedExtension) {
-
-                throw new IOException("이미지 파일만 업로드 가능합니다.");
-            }
-
-            // 이미지 파일 저장 경로 설정
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename().replace("//", "");
-            String imagePath = uploadDirectory + fileName;
-            Path imageFilePath = Paths.get(imagePath);
-
-            Files.createDirectories(imageFilePath.getParent());
-            Files.write(imageFilePath, file.getBytes());
-
-            // 이미지 정보 저장 (board_image)
-            BoardImageEntity boardImage = new BoardImageEntity();
-            boardImage.setBoardSeq(boardEntity.getBoardSeq());
-            boardImage.setImagePath(imagePath);
-            boardImage.setImageName(file.getOriginalFilename());
-            boardImageRepository.save(boardImage);
-
-            // board 테이블의 imageYn 속성을 true로 설정
-            boardEntity.setImageYn(true);
+            saveImage(file, boardEntity);
         }
 
     }
@@ -172,73 +176,15 @@ public class BoardService {
         boardEntity.setImageYn(boardRequestDto.getImageYn());
 
         // 이미지 파일 업로드 처리
-        if (boardEntity.isImageYn()) {
+        if (boardEntity.isImageYn()&&!file.isEmpty()) {
             // 새로운 이미지를 등록 했을 때
-            // file이 비어있으면 기존 이미지 유지
-            if (!file.isEmpty()) {
-                // 파일 크기 확인
-                if (file.getSize() > 20 * 1024 * 1024) {
-                    throw new IOException("파일 크기는 최대 20MB까지 허용됩니다.");
-                }
-
-                // 파일 확장자 확인 (이미지 파일 여부 체크)
-                String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-                boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
-                if (!isAllowedExtension) {
-                    throw new IOException("이미지 파일만 업로드 가능합니다.");
-                }
-
-                // 이미지 파일 저장 경로 설정
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                String imagePath = uploadDirectory + fileName;
-                Path imageFilePath = Paths.get(imagePath);
-
-                Files.createDirectories(imageFilePath.getParent());
-                Files.write(imageFilePath, file.getBytes());
-
-                // 이미지 정보 저장 (board_image)
-                BoardImageEntity boardImage = boardImageRepository.findByBoardSeq(boardSeq);
-                boardImage.setImagePath(imagePath);
-                boardImage.setImageName(file.getOriginalFilename());
-                boardImageRepository.save(boardImage);
-
-            }
+            boardImageRepository.deleteByBoardSeq(boardSeq);
+            saveImage(file, boardEntity);
+            // imageYn이 그대로이고 file이 비어있으면 기존 이미지 유지
         } else {
+            boardImageRepository.deleteByBoardSeq(boardSeq);
             if (!file.isEmpty()) {
-                boardImageRepository.deleteByBoardSeq(boardSeq);
-
-                // 파일 크기 확인
-                if (file.getSize() > 20 * 1024 * 1024) {
-                    throw new IOException("파일 크기는 최대 20MB까지 허용됩니다.");
-                }
-
-                // 파일 확장자 확인 (이미지 파일 여부 체크)
-                String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-                boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
-                if (!isAllowedExtension) {
-                    throw new IOException("이미지 파일만 업로드 가능합니다.");
-                }
-
-                // 이미지 파일 저장 경로 설정
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                String imagePath = uploadDirectory + fileName;
-                Path imageFilePath = Paths.get(imagePath);
-
-                Files.createDirectories(imageFilePath.getParent());
-                Files.write(imageFilePath, file.getBytes());
-
-                // 이미지 정보 저장 (board_image)
-                BoardImageEntity boardImage = new BoardImageEntity();
-                boardImage.setImagePath(imagePath);
-                boardImage.setImageName(file.getOriginalFilename());
-                boardImage.setBoardSeq(boardSeq);
-                boardImageRepository.save(boardImage);
-
-                // board 테이블의 imageYn 속성을 true로 설정
-                boardEntity.setImageYn(true);
-
-            } else {
-                boardImageRepository.deleteByBoardSeq(boardSeq);
+                saveImage(file, boardEntity);
             }
         }
 
@@ -330,9 +276,9 @@ public class BoardService {
     }
 
     @Transactional
-    public void updateComment(Long commentSeq, BoardCommentRequestDto commentDto){
+    public void updateComment(Long commentSeq, String commentContent){
         BoardCommentEntity boardCommentEntity = boardCommentRepository.findByCommentSeq(commentSeq);
-        boardCommentEntity.setCommentContent(commentDto.getCommentContent());
+        boardCommentEntity.setCommentContent(commentContent);
         boardCommentRepository.save(boardCommentEntity);
     }
 
