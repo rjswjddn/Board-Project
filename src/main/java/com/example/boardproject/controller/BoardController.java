@@ -193,6 +193,14 @@ public class BoardController {
         // 게시물 작성자와 로그인 유저가 같거나 관리자 유저이면 true 다르면 false
         boolean boardAuth = loginId.equals(boardUserId) || isAdmin;
 
+        // 삭제된 게시글인지 확인
+        if (boardResponseDto.isBoardStatus()){
+            model.addAttribute("message", "이미 삭제된 게시글 입니다.");
+            model.addAttribute("url", "/board");
+            return "alert";
+        }
+
+        // 접근 권한 확인
         if (boardResponseDto.getBoardTypeEnum().equals(BoardType.S) && !boardAuth) {
             model.addAttribute("message", "접근 권한이 없습니다.");
             model.addAttribute("url", "/board");
@@ -243,6 +251,13 @@ public class BoardController {
         // 현재 로그인 중인 유저 권한
         boolean isAdmin = (boolean) session.getAttribute("admin");
 
+        // 삭제된 게시글인지 확인
+        if (boardResponseDto.isBoardStatus()){
+            model.addAttribute("message", "이미 삭제된 게시글 입니다.");
+            model.addAttribute("url", "/board");
+            return "alert";
+        }
+
         // 게시글에 대한 권한이 없으면 리스트로 돌아감
         if(!isAdmin && !boardResponseDto.getUserSeq().equals(session.getAttribute("userSeq"))){
             model.addAttribute("message", "삭제 권한이 없습니다.");
@@ -267,6 +282,13 @@ public class BoardController {
         HttpSession session = httpServletRequest.getSession();
         // 현재 로그인 중인 유저 권한
         boolean isAdmin = (boolean) session.getAttribute("admin");
+
+        // 삭제된 게시글 확인
+        if (boardResponseDto.isBoardStatus()){
+            model.addAttribute("message", "이미 삭제된 게시글 입니다.");
+            model.addAttribute("url", "/board");
+            return "alert";
+        }
 
         // 게시글에 대한 권한이 없으면 리스트로 돌아감
         if(!isAdmin && !boardResponseDto.getUserSeq().equals(session.getAttribute("userSeq"))){
@@ -395,16 +417,23 @@ public class BoardController {
 
     @ResponseBody
     @DeleteMapping("/board/comment/{commentSeq}")
-    public Long deleteComment(@PathVariable("commentSeq") @RequestBody Long commentSeq){
-        boardService.deleteComment(commentSeq);
+    public Long deleteComment(@PathVariable("commentSeq") Long commentSeq, HttpServletRequest httpServletRequest){
+        if (boardService.checkCommentAuth(commentSeq, httpServletRequest)){
+            boardService.deleteComment(commentSeq);
+        }
         return commentSeq;
     }
 
     @ResponseBody
     @PutMapping("/board/comment/{commentSeq}")
-    public String updateComment(@PathVariable("commentSeq") Long commentSeq, @RequestBody String commentContent) {
-        boardService.updateComment(commentSeq, commentContent);
-        return commentContent;
+    public ResponseEntity<String> updateComment(@PathVariable("commentSeq") Long commentSeq, @RequestBody String commentContent, HttpServletRequest httpServletRequest) {
+        if (boardService.checkCommentAuth(commentSeq, httpServletRequest)){
+            boardService.updateComment(commentSeq, commentContent);
+            return new ResponseEntity<>(commentContent, HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(boardService.getCommentContent(commentSeq), HttpStatus.FORBIDDEN);
+        }
     }
 
 //    @PostMapping("/board/{boardSeq}/{commentSeq}/register_reply")

@@ -22,10 +22,16 @@
         <div class="card mb-4">
           <div class="card-body">
             <form enctype="multipart/form-data">
+              <div class="row">
+                <div class="mb-3 col-md-6">
+                  <label for="boardCreatedDate" class="form-label">작성일</label>
+                  <div id="boardCreatedDate" class="form-control" th:text="${#temporals.format(boardResponseDto.boardCreatedDate, 'yyyy-MM-dd HH:mm' )}"></div>
+                </div>
 
-              <div class="mb-3">
-                <label for="boardCreatedDate" class="form-label">작성일</label>
-                <div id="boardCreatedDate" class="form-control" th:text="${#temporals.format(boardResponseDto.boardCreatedDate, 'yyyy-MM-dd HH:mm' )}"></div>
+                <div th:if="boardResponseDto.boardUpdatedDate" class="mb-3 col-md-6">
+                  <label for="boardUpdatedDate" class="form-label">수정일</label>
+                  <div id="boardUpdatedDate" class="form-control" th:text="${#temporals.format(boardResponseDto.boardUpdatedDate, 'yyyy-MM-dd HH:mm' )}"></div>
+                </div>
               </div>
 
               <div class="mb-3">
@@ -76,13 +82,15 @@
         <div class="card card-primary card-outline">
           <div class="card-body repliesDiv" id="commentsContainer">
             <h4><span th:text="${boardResponseDto.commentCnt} + ' Comments'"></span></h4>
-
             <div th:each="comments : ${boardComments}">
               <hr> <!-- 분리선 추가 -->
-              <span>
+              <span th:id = "'comment-'+${comments.commentSeq}">
 <!--                댓글-->
-                <div id="commentContainer">
-                  <p th:text="${comments.userId} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                <div id="commentContainer" >
+                  <div class="row">
+                    <p class="col-md-9" th:text="${comments.userId} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                    <p th:if="${comments.commentUpdatedDate}" class="col-md-3" th:text="' 수정 : ' + ${#temporals.format(comments.commentUpdatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                  </div>
                   <p th:id="'comment-content-'+${comments.commentSeq}" th:text="${comments.commentContent}"></p>
                 </div>
 
@@ -112,7 +120,7 @@
                         onclick="toggleReplyForm(this.getAttribute('data-commentseq'))">답글 달기</button>
                 <button th:if="${comments.userSeq == session.userSeq || session.admin}" type="button" class="btn btn-sm btn-primary"
                         th:onclick="updateComment([[${comments.commentSeq}]])">수정</button>
-              <button th:if="${comments.userSeq == session.userSeq || session.admin}" class="btn btn-sm btn-primary"
+                <button th:if="${comments.userSeq == session.userSeq || session.admin}" class="btn btn-sm btn-primary"
                       th:onclick="deleteComment([[${comments.commentSeq}]])">삭제</button>
 
                 <!-- 답글 작성란 -->
@@ -140,6 +148,7 @@
                       </div>
                     </span>
                   </p>
+                  <hr> <!-- 댓글 사이에 분리선 추가 -->
                 </div>
 
 
@@ -361,8 +370,8 @@
       }).done(function (data){
         $('#comment-content-' + commentSeq).text(data);
         document.getElementById("updateForm"+commentSeq).style.display ='none'
-      }).fail(function(error){
-        alert(JSON.stringify(error));
+      }).fail(function(){
+        window.location.replace("/error");
       });
     };
   };
@@ -377,7 +386,7 @@
         dataType: 'JSON',
         contentType: 'application/json; charset=utf-8',
       }).done(function (){
-        reloadCommentsContainer();
+        $('#comment-' + commentSeq).remove();
       }).fail(function(error){
         alert(JSON.stringify(error));
       });

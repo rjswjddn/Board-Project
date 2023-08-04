@@ -5,6 +5,8 @@ import com.example.boardproject.ConstantClass.ValidationConstants;
 import com.example.boardproject.dto.*;
 import com.example.boardproject.entity.*;
 import com.example.boardproject.repository.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -294,6 +296,22 @@ public class BoardService {
             boardEntity.setCommentCnt(commentCount);
             boardRepository.save(boardEntity);
         }
+    }
+
+    public boolean checkCommentAuth(Long commentSeq, HttpServletRequest httpServletRequest){
+        HttpSession session = httpServletRequest.getSession(false);
+        Long loginUserSeq = (Long) session.getAttribute("userSeq");
+        boolean isAdmin = (boolean) session.getAttribute("admin");
+        log.info("댓글 권한 user seq : {}", boardCommentRepository.findUserSeqByCommentSeq(commentSeq));
+        if(boardCommentRepository.findUserSeqByCommentSeq(commentSeq).equals(loginUserSeq) || isAdmin){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public String getCommentContent(Long commentSeq){
+        return boardCommentRepository.findCommentContentByCommentSeq(commentSeq);
     }
 
     @Transactional

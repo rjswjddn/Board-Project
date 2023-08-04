@@ -27,4 +27,9 @@ public interface BoardCommentRepository extends JpaRepository<BoardCommentEntity
             "ORDER BY b.boardSeq DESC ")
     List<BoardCommentResponseDto> findBoardCommentsWithUserId(@Param("boardSeq") Long boardSeq);
 
+    @Query(value = "SELECT board_comment.user_seq FROM board_comment WHERE comment_seq = :commentSeq", nativeQuery = true)
+    Long findUserSeqByCommentSeq(@Param("commentSeq") Long commentSeq);
+
+    @Query(value = "SELECT board_comment.comment_content FROM board_comment WHERE comment_seq = :commentSeq", nativeQuery = true)
+    String findCommentContentByCommentSeq(@Param("commentSeq") Long commentSeq);
 }
