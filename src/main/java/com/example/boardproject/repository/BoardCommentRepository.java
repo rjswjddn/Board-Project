@@ -11,7 +11,9 @@ import java.util.List;
 @Repository
 public interface BoardCommentRepository extends JpaRepository<BoardCommentEntity, Long> {
     int countByBoardSeq(Long boardSeq);
-    List<BoardCommentEntity> findByBoardSeq(Long boardSeq);
+
+    @Query(value="SELECT * FROM board_comment WHERE comment_status = false and board_seq = :boardSeq" , nativeQuery = true)
+    List<BoardCommentEntity> findByBoardSeq(@Param("boardSeq") Long boardSeq);
 
     @Query(value = "UPDATE board_comment SET comment_status = true WHERE comment_seq = :commentSeq", nativeQuery = true)
     void deleteCommentByCommentSeq(@Param("commentSeq") Long commentSeq);
