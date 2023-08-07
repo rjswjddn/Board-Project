@@ -260,25 +260,24 @@ public class BoardService {
 
     public List<BoardCommentResponseDto> getCommentsByBoardSeqWithUserId(Long boardSeq) {
         // boardSeq로 댓글 리스트로 가져오기
-        // boardSeq로 대댓글 리스트로 가져오(user id가 필요한 경우 여기서 추가해서 붙이기)
+        // boardSeq로 대댓글 리스트로 가져오기 (user id가 필요한 경우 여기서 추가해서 붙이기)
         // 대댓글 리스트의 숫자만큼 반복돌면서 댓글 리스트에 리스트를 붙이기
-        List<BoardCommentResponseDto> boardCommentsWithUserId = boardCommentRepository.findBoardCommentsWithUserId(boardSeq);
-        List<BoardReplyResponseDto> byCommentSeq = boardReplyRepository.findBoardReplyWithUserId(boardSeq);
+        List<BoardCommentResponseDto> boardCommentResponseDtoList = boardCommentRepository.findBoardCommentsWithUserId(boardSeq);
+        List<BoardReplyResponseDto> boardReplyResponseDtoList = boardReplyRepository.findBoardReplyWithUserId(boardSeq);
 
-        for (BoardReplyResponseDto entity : byCommentSeq) {
-            Long commentSeq = entity.getCommentSeq();
-            for (BoardCommentResponseDto dto : boardCommentsWithUserId) {
-                if (Objects.equals(dto.getCommentSeq(), commentSeq)) {
-                    log.info("111111111111111111111111111111");
-                    dto.getBoardReplyResponseDtoList().add(entity);
+        for (BoardReplyResponseDto boardReplyResponseDto : boardReplyResponseDtoList) {
+            Long commentSeq = boardReplyResponseDto.getCommentSeq();
+            for (BoardCommentResponseDto boardCommentResponseDto : boardCommentResponseDtoList) {
+                if (Objects.equals(boardCommentResponseDto.getCommentSeq(), commentSeq)) {
+                    boardCommentResponseDto.getBoardReplyResponseDtoList().add(boardReplyResponseDto);
                     break;
                 }
             }
         }
 
-        log.info(boardCommentsWithUserId.toString());
+        log.info(boardCommentResponseDtoList.toString());
 
-        return boardCommentsWithUserId;
+        return boardCommentResponseDtoList;
     }
 
 
@@ -305,7 +304,9 @@ public class BoardService {
 
     @Transactional
     public void deleteComment(Long commentSeq){
+
         boardCommentRepository.deleteCommentByCommentSeq(commentSeq);
+
     }
 
 

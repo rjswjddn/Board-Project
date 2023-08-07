@@ -15,7 +15,8 @@ import java.util.List;
 public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
 
     //공지 게시물 + userId
-    @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
+    @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, " +
+            "b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
             "WHERE b.boardType = 'N' AND b.boardStatus = false " +
             "ORDER BY b.boardSeq DESC " +
@@ -23,7 +24,8 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
     List<BoardResponseDto> findNoticeBoardsWithUsers();
 
     //공지 아닌 게시물 + userId
-    @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
+    @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, " +
+            "b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
             "WHERE b.boardType != 'N' AND b.boardStatus = false " +
             "ORDER BY b.boardSeq DESC")
@@ -33,21 +35,21 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
     //(board tbl)userSeq로 (user tbl)userId 가져와서 userId로 검색
     @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
-            "WHERE u.userSeq = :userSeq " +
+            "WHERE u.userSeq = :userSeq AND b.boardStatus = false " +
             "ORDER BY b.boardSeq DESC")
     Page<BoardResponseDto> findBoardByUserSeqWithUserIdOrderByBoardSeqDesc(@Param("userSeq") Long userSeq, Pageable pageable);
 
     //boardContent로 검색
     @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
-            "WHERE lower(b.boardContent) like %:keyword% " +
+            "WHERE lower(b.boardContent) like %:keyword% AND b.boardStatus = false " +
             "ORDER BY b.boardSeq DESC")
     Page<BoardResponseDto> findByBoardContentContainingIgnoreCaseOrderByBoardSeqDesc(@Param("keyword") String keyword, Pageable pageable);
 
     //boardTitle로 검색
     @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
-            "WHERE b.boardTitle LIKE %:titleKeyword% " +
+            "WHERE b.boardTitle LIKE %:titleKeyword% AND b.boardStatus = false " +
             "ORDER BY b.boardSeq DESC")
     Page<BoardResponseDto> findByBoardTitleContainingIgnoreCaseOrderByBoardSeqDesc(@Param("titleKeyword") String titleKeyword, Pageable pageable);
 

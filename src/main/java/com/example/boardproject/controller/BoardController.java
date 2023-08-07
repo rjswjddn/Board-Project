@@ -223,14 +223,8 @@ public class BoardController {
         model.addAttribute("liked", liked);
 
         // 게시글 번호를 이용하여 댓글 목록 조회
-//        List<BoardCommentEntity> boardComments = boardService.getCommentsByBoardSeq(boardSeq);
-//        model.addAttribute("boardComments", boardComments);
-
         List<BoardCommentResponseDto> boardResponseDtos = boardService.getCommentsByBoardSeqWithUserId(boardSeq);
         model.addAttribute("boardComments", boardResponseDtos);
-
-        // userSeq로 댓글 작성자 ID 불러오기
-
 
         return "board_view";
     }
