@@ -1,10 +1,13 @@
 package com.example.boardproject.service;
 
 
+import com.example.boardproject.dto.LoginDto;
 import com.example.boardproject.dto.RegisterDto;
 import com.example.boardproject.dto.UserDto;
 import com.example.boardproject.entity.UserEntity;
 import com.example.boardproject.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,26 +28,30 @@ public class UserService {
         userRepository.save(registerDto.toEntity());
     }
 
+    public void login (LoginDto loginDto, HttpServletRequest httpServletRequest){
 
-    // 로그인
-    // 로그인 Password가 일치하는지 확인
-    // 일치하면 입력받은 UserDto, 일치하지 않으면 null return
-    public UserDto getUser(String userId) {
-        UserEntity userEntity = userRepository.findByUserId(userId);
-        if (userEntity == null) {
-            return null;
-        }
-        UserDto userDto = new UserDto(userEntity);
-        return userDto;
+        UserEntity userEntity = userRepository.findByUserId(loginDto.getUserId());
+
+        // Session 생성
+        HttpSession session = httpServletRequest.getSession(true);
+
+        //세션 유지시간 설정
+        session.setMaxInactiveInterval(3600);
+
+        // 세션에 userId를 넣어줌
+        session.setAttribute("userId", userEntity.getUserId());
+        session.setAttribute("userSeq", userEntity.getUserSeq());
+        session.setAttribute("admin", userEntity.isUserAdmin());
     }
 
+    public void logout (HttpServletRequest httpServletRequest){
+        HttpSession session = httpServletRequest.getSession(false);
+        session.invalidate();
+    }
 
     // seq로 유저를 찾아 dto에 저장하고 반환
     public UserDto findByUserSeq(Long userSeq) {
         UserDto userDto = new UserDto(userRepository.findByUserSeq(userSeq));
         return userDto;
     }
-
-
-
 }

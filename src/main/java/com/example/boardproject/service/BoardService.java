@@ -180,18 +180,16 @@ public class BoardService {
         boardEntity.setBoardTitle(boardRequestDto.getBoardTitle());
         boardEntity.setBoardContent(boardRequestDto.getBoardContent());
         boardEntity.setImageYn(boardRequestDto.getImageYn());
+        boardEntity.setBoardUpdatedDate(java.time.LocalDateTime.now());
 
         // 이미지 파일 업로드 처리
-        if (boardEntity.isImageYn()&&!file.isEmpty()) {
+        if (!file.isEmpty()) {
             // 새로운 이미지를 등록 했을 때
             boardImageRepository.deleteByBoardSeq(boardSeq);
             saveImage(file, boardEntity);
             // imageYn이 그대로이고 file이 비어있으면 기존 이미지 유지
-        } else {
+        } else if (!boardEntity.isImageYn()) {
             boardImageRepository.deleteByBoardSeq(boardSeq);
-            if (!file.isEmpty()) {
-                saveImage(file, boardEntity);
-            }
         }
 
         boardRepository.save(boardEntity);
@@ -317,13 +315,16 @@ public class BoardService {
 
     @Transactional
     public void updateComment(Long commentSeq, String commentContent){
+
         BoardCommentEntity boardCommentEntity = boardCommentRepository.findByCommentSeq(commentSeq);
+        boardCommentEntity.setCommentUpdatedDate(java.time.LocalDateTime.now());
         boardCommentEntity.setCommentContent(commentContent);
         boardCommentRepository.save(boardCommentEntity);
     }
 
     @Transactional
     public void deleteComment(Long commentSeq){
+        boardRepository.decreaseCommentCnt(boardCommentRepository.findByCommentSeq(commentSeq).getBoardSeq());
         boardCommentRepository.deleteCommentByCommentSeq(commentSeq);
 
 //        List<BoardReplyEntity> replyEntities = boardReplyRepository.findByCommentSeq(commentSeq);

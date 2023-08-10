@@ -419,9 +419,12 @@ public class BoardController {
     // 댓글 수정
     @ResponseBody
     @PutMapping("/board/comment/{commentSeq}")
-    public ResponseEntity<String> updateComment(@PathVariable("commentSeq") Long commentSeq, @RequestBody String commentContent, HttpServletRequest httpServletRequest) {
+    public ResponseEntity<String> updateComment(@PathVariable("commentSeq") Long commentSeq,
+                                                @RequestBody String commentContent,
+                                                HttpServletRequest httpServletRequest) {
         if (boardService.checkCommentAuth(commentSeq, httpServletRequest)){
             boardService.updateComment(commentSeq, commentContent);
+            log.info("댓글 수정 {}", commentContent);
             return new ResponseEntity<>(commentContent, HttpStatus.OK);
         }
         else {
