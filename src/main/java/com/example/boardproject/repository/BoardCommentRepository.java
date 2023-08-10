@@ -32,4 +32,8 @@ public interface BoardCommentRepository extends JpaRepository<BoardCommentEntity
 
     @Query(value = "SELECT board_comment.comment_content FROM board_comment WHERE comment_seq = :commentSeq", nativeQuery = true)
     String findCommentContentByCommentSeq(@Param("commentSeq") Long commentSeq);
+
+    @Query(value = "UPDATE board_comment SET comment_status = true WHERE board_seq = :boardSeq", nativeQuery = true)
+    void deleteByBoardSeq(Long boardSeq);
+
 }

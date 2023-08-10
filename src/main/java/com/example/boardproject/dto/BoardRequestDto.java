@@ -61,7 +61,7 @@ public class BoardRequestDto {
                 .imageYn(this.imageYn)
                 .boardStatus(this.boardStatus)
                 .boardCreatedDate(this.boardCreatedDate)
-                .boardUpdatedDate(this.boardUpdatedDate)
+
                 .userSeq(this.userSeq)
                 .build();
 

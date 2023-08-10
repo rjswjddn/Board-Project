@@ -84,27 +84,20 @@
             <h4><span th:text="${boardResponseDto.commentCnt} + ' Comments'"></span></h4>
             <div th:each="comments : ${boardComments}">
               <hr> <!-- 분리선 추가 -->
-              <span th:id = "'comment-'+${comments.commentSeq}">
-<!--                댓글-->
-                <div id="commentContainer" >
+              <span th:id="'comment-'+${comments.commentSeq}">
+
+<!--                  댓글 표시-->
+                <div id="commentContainer">
                   <div class="row">
-                    <p class="col-md-9" th:text="${comments.userId} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
-                    <p th:if="${comments.commentUpdatedDate}" class="col-md-3" th:text="' 수정 : ' + ${#temporals.format(comments.commentUpdatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                    <p class="col-md-9"
+                       th:text="${'작성자 : ' + comments.userId} + '   ' + ${'작성일 : ' + #temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                    <p th:if="${comments.commentUpdatedDate}" class="col-md-3"
+                       th:text="'수정일 : ' + ${#temporals.format(comments.commentUpdatedDate, 'yyyy-MM-dd HH:mm')}"></p>
                   </div>
                   <p th:id="'comment-content-'+${comments.commentSeq}" th:text="${comments.commentContent}"></p>
                 </div>
 
-<!--                대댓글-->
-                <div id="replyContainer">
-                  <div th:if="${comments.boardReplyResponseDtoList}">
-                    <div th:each="reply : ${comments.boardReplyResponseDtoList}">
-                      <div style="margin-left: 40px;"> <!-- 들여쓰기 -->
-                      <p th:text="${reply.userId} + ' ' + ${#temporals.format(reply.replyCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
-                      <p th:text="${reply.replyContent}"></p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+
 
               <form class="form-horizontal" th:id="'updateForm'+${comments.commentSeq}" style="display: none">
                 <div class="form-group">
@@ -115,31 +108,47 @@
                 <button class="btn btn-sm btn-light" type="button"
                         th:onclick="updateCancel([[${comments.commentSeq}]])">취소</button>
               </form>
+
                 <button class="btn btn-sm btn-primary"
                         th:attr="data-commentseq=${comments.commentSeq}"
                         onclick="toggleReplyForm(this.getAttribute('data-commentseq'))">답글 달기</button>
-                <button th:if="${comments.userSeq == session.userSeq || session.admin}" type="button" class="btn btn-sm btn-primary"
+                <button th:if="${comments.userSeq == session.userSeq || session.admin}" type="button"
+                        class="btn btn-sm btn-primary"
                         th:onclick="updateComment([[${comments.commentSeq}]])">수정</button>
                 <button th:if="${comments.userSeq == session.userSeq || session.admin}" class="btn btn-sm btn-primary"
-                      th:onclick="deleteComment([[${comments.commentSeq}]])">삭제</button>
+                        th:onclick="deleteComment([[${comments.commentSeq}]])">삭제</button>
 
-                <!-- 답글 작성란 -->
+                <!--                  대댓글 표시-->
+                <div id="replyContainer">
+                  <div th:if="${comments.boardReplyResponseDtoList}">
+                    <div th:each="reply : ${comments.boardReplyResponseDtoList}">
+                      <div style="margin-left: 40px;"> <!-- 들여쓰기 -->
+                      <p th:text="${'작성자 : ' + reply.userId} + '   ' + ${'작성일 : ' + #temporals.format(reply.replyCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                      <p th:text="${reply.replyContent}"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+<!--                답글 작성란 -->
                 <div class="reply_create" style="display: none;" th:id="'reply_create_' + ${comments.commentSeq}">
                   <p class="form_wrap">
                     <span class="textarea_edit">
                       <div class="card mb-4">
-                        <div class="card-body">
-                          <form id="replyForm" class="form-horizontal"
+                        <div class="card-footer">
+                          <form th:id="'replyForm_' + ${comments.commentSeq}" class="form-horizontal"
                                 th:action="@{/board/{boardSeq}/{commentSeq}/register_reply(boardSeq=${boardResponseDto.boardSeq}, commentSeq=${comments.commentSeq})}"
-                                method="post" th:data-boardseq="${boardResponseDto.boardSeq}" th:data-commentseq="${comments.commentSeq}">
+                                method="post" th:data-boardseq="${boardResponseDto.boardSeq}"
+                                th:data-commentseq="${comments.commentSeq}">
                             <div class="row">
                               <div class="form-group col-sm-10">
-                                <input class="form-control input-sm" type="text" id="reply" name="replyContent"
-                                       placeholder="댓글 입력...">
+                                <input class="form-control input-sm" type="text" id="replyContent" name="replyContent"
+                                       placeholder="답글 입력..." onkeydown="preventFormSubmit(event)">
                               </div>
                               <div class="form-group col-sm-2">
-                                <button type="submit" class="btn btn-primary" >답글 작성</button>
-<!--                                <button type="button" class="btn btn-primary" onclick="submitReply()">답글 작성</button>-->
+                                 <button type="button" class="btn btn-primary"
+                                         th:attr="data-commentseq=${comments.commentSeq}"
+                                         onclick="submitReply(this.getAttribute('data-commentseq'))" >답글 작성</button>
 
                               </div>
                             </div>
@@ -150,30 +159,31 @@
                   </p>
                   <hr> <!-- 댓글 사이에 분리선 추가 -->
                 </div>
-
-
-            </span>
+              </span>
             </div>
           </div>
         </div>
 
-        <!-- 댓글 작성란 -->
+<!--        댓글 작성란 -->
         <div class="card mb-4">
-          <div class="card-body" id="commentFormContainer" >
-            <form id="commentForm" class="form-horizontal" th:action="@{/board/{boardSeq}/register_comment(boardSeq=${boardResponseDto.boardSeq})}"
+          <div class="card-footer" id="commentFormContainer">
+            <form id="commentForm" class="form-horizontal"
+                  th:action="@{/board/{boardSeq}/register_comment(boardSeq=${boardResponseDto.boardSeq})}"
                   method="post" th:data-boardseq="${boardResponseDto.boardSeq}">
               <div class="row">
-                <input type="hidden" name="parentCommentSeq" id="parentCommentSeq" value="">
                 <div class="form-group col-sm-10">
-                  <input class="form-control input-sm" type="text" id="comment" name="commentContent" placeholder="댓글 입력...">
+                  <textarea class="form-control input-sm" type="text" id="commentContent"
+                            placeholder="댓글 입력..." oninput="updateCommentContentCharacterCount()" onkeydown="preventFormSubmit(event)"> </textarea>
+                  <div id="commentContentCharacterCount" class="text-secondary">0 / 200자</div>
                 </div>
                 <div class="form-group col-sm-2">
-                  <button type="button" class="btn btn-primary" onclick="submitComment()" >댓글 작성</button>
+                  <button type="button" class="btn btn-primary" id="commentSubmitButton" onclick="submitComment()" disabled>댓글 작성</button>
                 </div>
               </div>
             </form>
           </div>
         </div>
+
 
       </div>
     </main>
@@ -253,16 +263,21 @@
 
   // 댓글 작성
   function submitComment() {
-    var formData = $('#commentForm').serialize();
+    var commentContent = $('#commentContent').val();
     var boardSeq = $('#commentForm').data('boardseq');
-    console.log('boardSeq:', boardSeq);
+
+    var formData = new FormData();
+    formData.append('commentContent', commentContent);
+    console.log('댓글 작성 boardSeq:', boardSeq);
     $.ajax({
       type: 'POST',
       url: $('#commentForm').attr('action'),
       data: formData,
+      processData: false,
+      contentType: false,
       success: function(response) {
         console.log("댓글 작성 성공:", response);
-        $('#comment').val('');
+        $('#commentContent').val('');
         reloadCommentsContainer();
 
         // loadComments(boardSeq);
@@ -273,7 +288,7 @@
     });
   }
 
-  // 댓글 목록만 리로딩
+  // 댓글 목록만 리로드
   function reloadCommentsContainer() {
     $('#commentsContainer').load(location.href+' #commentsContainer');
   }
@@ -307,9 +322,9 @@
 
   // 답글 창 열기
   function toggleReplyForm(commentSeq) {
-    console.log('CommentSeq:', commentSeq);
+    console.log('select CommentSeq:', commentSeq);
+
     var replyForm = document.getElementById(`reply_create_${commentSeq}`);
-    console.log('ReplyForm:', replyForm);
 
     if (replyForm) {
       if (replyForm.style.display === 'none') {
@@ -322,27 +337,31 @@
     }
   }
 
-  function submitReply() {
-    var formData = $('#replyForm').serialize();
-    var boardSeq = $('#replyForm').data('boardseq');
-    var commentSeq = $('#replyForm').data('commentseq');
-    console.log('formData:', formData);
-    $.ajax({
-      type: 'POST',
-      url: $('#replyForm').attr('action'),
-      data: formData,
-      success: function(response) {
-        console.log("대댓글 작성 성공:", response);
-        $('#reply').val('');
-        reloadCommentsContainer();
+  // 답글 작성
+  function submitReply(commentSeq) {
+      var formData = $(`#replyForm_${commentSeq}`).serialize();
+      var boardSeq = $(`#replyForm_${commentSeq}`).data('boardseq');
+      var replyCommentSeq = $(`#replyForm_${commentSeq}`).data('commentseq');
 
-      },
-      error: function(error) {
-        console.error("대댓글 작성 실패:", error);
-      }
-    });
+      console.log('boardSeq:', boardSeq);
+      console.log('replyCommentSeq:', replyCommentSeq);
+
+      $.ajax({
+          type: 'POST',
+          url: $(`#replyForm_${commentSeq}`).attr('action'),
+          data: formData,
+          success: function(response) {
+              console.log("답글 작성 성공:", response);
+              $('#reply').val('');
+              reloadCommentsContainer();
+          },
+          error: function(error) {
+              console.error("답글 작성 실패:", error);
+          }
+      });
+
+
   }
-
 
 
   function updateComment(commentSeq){
@@ -352,6 +371,7 @@
   function updateCancel(commentSeq){
     document.getElementById("updateForm"+commentSeq).style.display ='none'
   };
+
   function updateCheck(commentSeq){
     let commentContents = document.getElementById("comment-update-"+commentSeq).value;
     if(commentContents.trim() === ""){
@@ -374,7 +394,6 @@
   };
 
   function deleteComment(commentSeq){
-
     const check = confirm("삭제하시겠습니까?");
     if(check){
       $.ajax({
@@ -383,13 +402,58 @@
         dataType: 'JSON',
         contentType: 'application/json; charset=utf-8',
       }).done(function (){
-        // $('#comment-' + commentSeq).remove();
         reloadCommentsContainer();
       }).fail(function(error){
         alert(JSON.stringify(error));
       });
     };
   };
+
+  // 엔터키로 form submit 막기
+  function preventFormSubmit(event) {
+      if (event.keyCode === 13) {
+          event.preventDefault();
+      }
+  }
+
+  // 댓글 자수 count
+  function updateCommentContentCharacterCount() {
+    var textarea = document.getElementById('commentContent');
+    var commentContentCharacterCount = document.getElementById('commentContentCharacterCount');
+
+    // 입력된 내용의 글자 수를 계산
+    var text = textarea.value;
+    var characterLength = text.length;
+
+    // 글자 수를 화면에 업데이트
+    commentContentCharacterCount.innerHTML = characterLength + " / 200자";
+  }
+
+  function updateCommentSubmitButtonState() {
+    var commentContent = document.getElementById('commentContent').value;
+    var isCommentContentValid = commentContent.trim() !== '' && commentContent.length <= 200;
+
+    // 댓글 작성 버튼 상태 업데이트
+    var commentSubmitButton = document.getElementById('commentSubmitButton');
+    commentSubmitButton.disabled = !(isCommentContentValid);
+  }
+
+  $('#commentContent').on('input', function() {
+    updateCommentSubmitButtonState();
+  });
+
+  // 답글 자수 count
+  function updateReplyContentCharacterCount() {
+    var textarea = document.getElementById('replyContent');
+    var replyContentCharacterCount = document.getElementById('replyContentCharacterCount');
+
+    // 입력된 내용의 글자 수를 계산
+    var text = textarea.value;
+    var characterLength = text.length;
+
+    // 글자 수를 화면에 업데이트
+    replyContentCharacterCount.innerHTML = characterLength + " / 200자";
+  }
 
 </script>
 

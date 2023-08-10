@@ -70,6 +70,7 @@
                                     <span th:if="${board.getBoardTypeEnum().getIconClass() != null}">
                                         <i th:class="${board.getBoardTypeEnum().getIconClass()}"></i>
                                     </span>
+
                                     <span th:if="${board.getBoardTypeEnum().name() == T(com.example.boardproject.entity.BoardType).S.name()}">
                                         <span th:if="${board.userSeq == session.userSeq} or ${session.admin}">
                                             <a th:method="get" th:href="@{/board/{boardSeq}(boardSeq = ${board.boardSeq})}" th:text="' ' + ${board.boardTitle}"></a>
