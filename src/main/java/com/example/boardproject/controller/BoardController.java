@@ -368,11 +368,10 @@ public class BoardController {
         }
     }
 
-
     // 댓글 작성
     @PostMapping("/board/{boardSeq}/register_comment")
     @ResponseBody
-    public ResponseEntity<String> registerComment(@PathVariable("boardSeq") Long boardSeq,
+    public ResponseEntity<String> registerComment(@Valid @PathVariable("boardSeq") Long boardSeq,
                                                   @ModelAttribute BoardCommentRequestDto commentDto,
                                                   HttpServletRequest httpServletRequest) {
         try {
@@ -383,6 +382,9 @@ public class BoardController {
                 commentDto.setUserId(userId);
                 commentDto.setUserSeq(userSeq);
             }
+
+            // 유효성 검사
+            boardService.validateCommentRequest(commentDto);
 
             log.info("새로운 댓글 작성: {}", commentDto.getCommentContent());
             boardService.registerBoardComment(commentDto);
@@ -395,20 +397,16 @@ public class BoardController {
         }
     }
 
+
+    // 댓글, 대댓글 목록 불러오기
 //    @GetMapping("/board/{boardSeq}/comments")
-//    public ResponseEntity<List<BoardCommentEntity>> getCommentsByBoardSeq(@PathVariable("boardSeq") Long boardSeq) {
-//        List<BoardCommentEntity> boardComments = boardService.getCommentsByBoardSeq(boardSeq);
+//    public ResponseEntity<List<BoardCommentResponseDto>> getCommentsByBoardSeq(@PathVariable("boardSeq") Long boardSeq) {
+//        List<BoardCommentResponseDto> boardComments  = boardService.getCommentsByBoardSeqWithUserId(boardSeq);
 //        return ResponseEntity.ok(boardComments);
 //    }
 
-    @GetMapping("/board/{boardSeq}/comments")
-    public ResponseEntity<List<BoardCommentResponseDto>> getCommentsByBoardSeq(@PathVariable("boardSeq") Long boardSeq) {
-        List<BoardCommentResponseDto> boardComments  = boardService.getCommentsByBoardSeqWithUserId(boardSeq);
-        return ResponseEntity.ok(boardComments);
-    }
 
-
-
+    // 댓글 삭제
     @ResponseBody
     @DeleteMapping("/board/comment/{commentSeq}")
     public Long deleteComment(@PathVariable("commentSeq") Long commentSeq, HttpServletRequest httpServletRequest){
@@ -418,6 +416,7 @@ public class BoardController {
         return commentSeq;
     }
 
+    // 댓글 수정
     @ResponseBody
     @PutMapping("/board/comment/{commentSeq}")
     public ResponseEntity<String> updateComment(@PathVariable("commentSeq") Long commentSeq, @RequestBody String commentContent, HttpServletRequest httpServletRequest) {
@@ -430,39 +429,13 @@ public class BoardController {
         }
     }
 
-//    @PostMapping("/board/{boardSeq}/{commentSeq}/register_reply")
-//    @ResponseBody
-//    public ResponseEntity<String> registerReply(@PathVariable("boardSeq") Long boardSeq,
-//                                                @PathVariable("commentSeq") Long commentSeq,
-//                                                @ModelAttribute BoardReplyRequestDto replyDto,
-//                                                HttpServletRequest httpServletRequest) {
-//        try {
-//            HttpSession session = httpServletRequest.getSession(false);
-//            if (session != null) {
-//                String userId = (String) session.getAttribute("userId");
-//                Long userSeq = (Long) session.getAttribute("userSeq");
-//                replyDto.setUserId(userId);
-//                replyDto.setUserSeq(userSeq);
-//            }
-//
-//            log.info("새로운 대댓글 작성: {}", replyDto.getReplyContent());
-//            boardService.registerBoardReply(replyDto);
-//
-//            return ResponseEntity.ok("success");
-//
-//        } catch (Exception e) {
-//            log.error("Error occurred during comment registration: {}", e.getMessage(), e);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("대댓글 작성에 실패했습니다.");
-//        }
-//    }
-
     //대댓글 작성
     @PostMapping("/board/{boardSeq}/{commentSeq}/register_reply")
-    public String registerReply(@PathVariable("boardSeq") Long boardSeq,
-                                  @PathVariable("commentSeq") Long commentSeq,
-                                  @ModelAttribute BoardReplyRequestDto replyDto,
-                                  HttpServletRequest httpServletRequest,
-                                  RedirectAttributes redirectAttributes) {
+    @ResponseBody
+    public ResponseEntity<String> registerReply(@Valid @PathVariable("boardSeq") Long boardSeq,
+                                                @PathVariable("commentSeq") Long commentSeq,
+                                                @ModelAttribute BoardReplyRequestDto replyDto,
+                                                HttpServletRequest httpServletRequest) {
         try {
             HttpSession session = httpServletRequest.getSession(false);
             if (session != null) {
@@ -472,22 +445,19 @@ public class BoardController {
                 replyDto.setUserSeq(userSeq);
             }
 
-            log.info("새로운 댓글 작성: {}", replyDto.getReplyContent());
+            // 유효성 검사
+            boardService.validateReplyRequest(replyDto);
+
+            log.info("새로운 대댓글 작성: {}", replyDto.getReplyContent());
             boardService.registerBoardReply(replyDto);
 
-            return "redirect:/board/" + boardSeq;
+            return ResponseEntity.ok("success");
 
         } catch (Exception e) {
             log.error("Error occurred during comment registration: {}", e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("errorMessage", "대댓글 작성에 실패했습니다.");
-
-            return "redirect:/board/" + boardSeq;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("대댓글 작성에 실패했습니다.");
         }
     }
-
-
-
-
 
 
 

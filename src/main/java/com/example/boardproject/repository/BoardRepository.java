@@ -31,7 +31,8 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
 
 
     //(board tbl)userSeq로 (user tbl)userId 가져와서 userId로 검색
-    @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
+    @Query("SELECT new com.example.boardproject.dto.BoardResponseDto(b.boardSeq, b.boardTitle, b.boardContent, b.boardType, b.commentCnt, " +
+            "b.viewCnt, b.likeCnt, b.imageYn, b.boardStatus, b.boardCreatedDate, b.boardUpdatedDate, b.userSeq, u.userId) " +
             "FROM BoardEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
             "WHERE u.userSeq = :userSeq AND b.boardStatus = false " +
             "ORDER BY b.boardSeq DESC")

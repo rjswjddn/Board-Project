@@ -48,8 +48,8 @@
 
                             <div class="mb-3">
                                 <label for="content" class="form-label">내용</label>
-                                <textarea th:field="*{boardContent}" class="form-control" id="content" onblur="validateContentForm(this)" oninput="updateCharacterCount()" style="height: 300px;"></textarea>
-                                <div id="characterCount" class="text-secondary">0 / 2000자</div>
+                                <textarea th:field="*{boardContent}" class="form-control" id="content" onblur="validateContentForm(this)" oninput="updateContentCharacterCount()" style="height: 300px;"></textarea>
+                                <div id="contentCharacterCount" class="text-secondary">0 / 2000자</div>
                                 <div id="contentError" class="text-danger"></div>
                             </div>
 
@@ -80,6 +80,14 @@
         <div th:replace="/fragment/footer.html :: fragment-footer"></div>
     </div>
 </div>
+
+<script>
+    // 이미지 첨부 에러메시지
+    var errorMessage = "[[${errorMessage}]]";
+    if (errorMessage) {
+        alert(errorMessage);
+    }
+</script>
 
 <!--board_register.js 추가-->
 <script src="/js/board_register.js"></script>
