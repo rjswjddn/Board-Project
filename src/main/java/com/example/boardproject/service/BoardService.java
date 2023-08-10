@@ -1,16 +1,12 @@
 package com.example.boardproject.service;
 
-import com.example.boardproject.Constants;
-import com.example.boardproject.dto.BoardRequestDto;
-import com.example.boardproject.dto.BoardResponseDto;
-import com.example.boardproject.entity.BoardEntity;
-import com.example.boardproject.entity.BoardImageEntity;
-import com.example.boardproject.entity.BoardLikeEntity;
-import com.example.boardproject.entity.UserEntity;
-import com.example.boardproject.repository.BoardImageRepository;
-import com.example.boardproject.repository.BoardLikeRepository;
-import com.example.boardproject.repository.BoardRepository;
-import com.example.boardproject.repository.UserRepository;
+import com.example.boardproject.ConstantClass.Constants;
+import com.example.boardproject.ConstantClass.ValidationConstants;
+import com.example.boardproject.dto.*;
+import com.example.boardproject.entity.*;
+import com.example.boardproject.repository.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,18 +24,21 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class BoardService {
-    @Value("${upload.directory}")
+    @Value("D:/projects/image/")
     private String uploadDirectory;
 
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
     private final BoardImageRepository boardImageRepository;
     private final BoardLikeRepository boardLikeRepository;
+    private final BoardCommentRepository boardCommentRepository;
+    private final BoardReplyRepository boardReplyRepository;
 
     //공지글
     public List<BoardResponseDto> getNoticeBoardsWithUsers() {
@@ -86,6 +85,38 @@ public class BoardService {
         return searchResult;
     }
 
+    // 이미지 저장 메소드
+    public void saveImage(MultipartFile file, BoardEntity boardEntity ) throws IOException{
+        if (file.getSize() > 20 * 1024 * 1024) {
+            throw new IOException("파일 크기는 최대 20MB까지 허용됩니다.");
+        }
+
+        // 파일 확장자 확인 (이미지 파일 여부 체크)
+        String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
+        boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
+        if (!isAllowedExtension) {
+
+            throw new IOException("이미지 파일만 업로드 가능합니다.");
+        }
+
+        // 이미지 파일 저장 경로 설정
+        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename().replace("//", "");
+        String imagePath = uploadDirectory + fileName;
+        Path imageFilePath = Paths.get(imagePath);
+
+        Files.createDirectories(imageFilePath.getParent());
+        Files.write(imageFilePath, file.getBytes());
+
+        // 이미지 정보 저장 (board_image)
+        BoardImageEntity boardImage = new BoardImageEntity();
+        boardImage.setBoardSeq(boardEntity.getBoardSeq());
+        boardImage.setImagePath(imagePath);
+        boardImage.setImageName(file.getOriginalFilename());
+        boardImageRepository.save(boardImage);
+
+        // board 테이블의 imageYn 속성을 true로 설정
+        boardEntity.setImageYn(true);
+    }
 
     //게시물 등록
     @Transactional
@@ -96,55 +127,29 @@ public class BoardService {
         // 이미지 파일 업로드 처리
         if (!file.isEmpty()) {
             // 파일 크기 확인
-            if (file.getSize() > 20 * 1024 * 1024) {
-                throw new IOException("파일 크기는 최대 20MB까지 허용됩니다.");
-            }
-
-            // 파일 확장자 확인 (이미지 파일 여부 체크)
-            String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-            boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
-            if (!isAllowedExtension) {
-
-                throw new IOException("이미지 파일만 업로드 가능합니다.");
-            }
-
-            // 이미지 파일 저장 경로 설정
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename().replace("//", "");
-            String imagePath = uploadDirectory + fileName;
-            Path imageFilePath = Paths.get(imagePath);
-
-            Files.createDirectories(imageFilePath.getParent());
-            Files.write(imageFilePath, file.getBytes());
-
-            // 이미지 정보 저장 (board_image)
-            BoardImageEntity boardImage = new BoardImageEntity();
-            boardImage.setBoardSeq(boardEntity.getBoardSeq());
-            boardImage.setImagePath(imagePath);
-            boardImage.setImageName(file.getOriginalFilename());
-            boardImageRepository.save(boardImage);
-
-            // board 테이블의 imageYn 속성을 true로 설정
-            boardEntity.setImageYn(true);
+            saveImage(file, boardEntity);
         }
 
     }
 
 
     public boolean isValidBoardTitle(String boardTitle) {
-        return StringUtils.hasText(boardTitle) && boardTitle.length() <= 45;
+        return StringUtils.hasText(boardTitle) && boardTitle.length() <= ValidationConstants.MAX_BOARD_TITLE_LENGTH;
     }
 
     public boolean isValidContent(String boardContent) {
-        return StringUtils.hasText(boardContent) && boardContent.length() <= 2000;
+        return StringUtils.hasText(boardContent) && boardContent.length() <= ValidationConstants.MAX_BOARD_CONTENT_LENGTH;
     }
 
     // 유효성 검사
-    public void validateBoardRequest(BoardRequestDto boardRequestDto, BindingResult bindingResult) {
+    public void validateBoardRequest(BoardRequestDto boardRequestDto, BindingResult bindingResult) throws IOException {
         if (!isValidBoardTitle(boardRequestDto.getBoardTitle())) {
-            bindingResult.rejectValue("boardTitle", "empty.boardTitle", "제목은 최소 1자에서 최대 45자까지 허용됩니다.");
+            bindingResult.rejectValue("boardTitle", "empty.boardTitle", ValidationConstants.BOARD_TITLE_ERROR_MESSAGE);
+            throw new IOException(ValidationConstants.BOARD_TITLE_ERROR_MESSAGE);
         }
         if (!isValidContent(boardRequestDto.getBoardContent())) {
-            bindingResult.rejectValue("boardContent", "invalid.boardContent", "내용은 최소 1자에서 최대 2000자까지 허용됩니다.");
+            bindingResult.rejectValue("boardContent", "invalid.boardContent", ValidationConstants.BOARD_CONTENT_ERROR_MESSAGE);
+            throw new IOException(ValidationConstants.BOARD_CONTENT_ERROR_MESSAGE);
         }
     }
 
@@ -155,6 +160,8 @@ public class BoardService {
         return boardResponseDto;
 
     }
+
+
 
     // Seq로 게시물을 찾아 board_status를 0으로 변경
     @Transactional
@@ -174,73 +181,15 @@ public class BoardService {
         boardEntity.setImageYn(boardRequestDto.getImageYn());
 
         // 이미지 파일 업로드 처리
-        if (boardEntity.isImageYn()) {
+        if (boardEntity.isImageYn()&&!file.isEmpty()) {
             // 새로운 이미지를 등록 했을 때
-            // file이 비어있으면 기존 이미지 유지
-            if (!file.isEmpty()) {
-                // 파일 크기 확인
-                if (file.getSize() > 20 * 1024 * 1024) {
-                    throw new IOException("파일 크기는 최대 20MB까지 허용됩니다.");
-                }
-
-                // 파일 확장자 확인 (이미지 파일 여부 체크)
-                String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-                boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
-                if (!isAllowedExtension) {
-                    throw new IOException("이미지 파일만 업로드 가능합니다.");
-                }
-
-                // 이미지 파일 저장 경로 설정
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                String imagePath = uploadDirectory + fileName;
-                Path imageFilePath = Paths.get(imagePath);
-
-                Files.createDirectories(imageFilePath.getParent());
-                Files.write(imageFilePath, file.getBytes());
-
-                // 이미지 정보 저장 (board_image)
-                BoardImageEntity boardImage = boardImageRepository.findByBoardSeq(boardSeq);
-                boardImage.setImagePath(imagePath);
-                boardImage.setImageName(file.getOriginalFilename());
-                boardImageRepository.save(boardImage);
-
-            }
+            boardImageRepository.deleteByBoardSeq(boardSeq);
+            saveImage(file, boardEntity);
+            // imageYn이 그대로이고 file이 비어있으면 기존 이미지 유지
         } else {
+            boardImageRepository.deleteByBoardSeq(boardSeq);
             if (!file.isEmpty()) {
-                boardImageRepository.deleteByBoardSeq(boardSeq);
-
-                // 파일 크기 확인
-                if (file.getSize() > 20 * 1024 * 1024) {
-                    throw new IOException("파일 크기는 최대 20MB까지 허용됩니다.");
-                }
-
-                // 파일 확장자 확인 (이미지 파일 여부 체크)
-                String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
-                boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
-                if (!isAllowedExtension) {
-                    throw new IOException("이미지 파일만 업로드 가능합니다.");
-                }
-
-                // 이미지 파일 저장 경로 설정
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                String imagePath = uploadDirectory + fileName;
-                Path imageFilePath = Paths.get(imagePath);
-
-                Files.createDirectories(imageFilePath.getParent());
-                Files.write(imageFilePath, file.getBytes());
-
-                // 이미지 정보 저장 (board_image)
-                BoardImageEntity boardImage = new BoardImageEntity();
-                boardImage.setImagePath(imagePath);
-                boardImage.setImageName(file.getOriginalFilename());
-                boardImage.setBoardSeq(boardSeq);
-                boardImageRepository.save(boardImage);
-
-                // board 테이블의 imageYn 속성을 true로 설정
-                boardEntity.setImageYn(true);
-
-            } else {
-                boardImageRepository.deleteByBoardSeq(boardSeq);
+                saveImage(file, boardEntity);
             }
         }
 
@@ -248,14 +197,21 @@ public class BoardService {
         boardRepository.save(boardEntity);
     }
 
+    public String getImagePathByBoardSeq(Long boardSeq) {
+        return boardImageRepository.getImagePathByBoardSeq(boardSeq);
+    }
 
 
     //좋아요 기능
     @Transactional
-    public String toggleLike(Long boardSeq, Long userSeq) {
-        boolean alreadyLiked = boardLikeRepository.existsByBoardSeqAndUserSeq(boardSeq, userSeq);
+    public String toggleLike(Long boardSeq, Long userSeq) throws IOException {
         BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
+        if (boardEntity == null) {
+            // DB에 해당 boardSeq가 존재하지 않는 경우
+            throw new IOException("존재하지 않는 게시물입니다.");
+        }
 
+        boolean alreadyLiked = boardLikeRepository.existsByBoardSeqAndUserSeq(boardSeq, userSeq);
         if (alreadyLiked) {
             boardLikeRepository.deleteByBoardSeqAndUserSeq(boardSeq, userSeq);
             boardEntity.setLikeCnt(boardEntity.getLikeCnt() - 1);
@@ -273,23 +229,120 @@ public class BoardService {
         return alreadyLiked ? "disliked" : "liked";
     }
 
-    public String getImagePathByBoardSeq(Long boardSeq) {
-        return boardImageRepository.getImagePathByBoardSeq(boardSeq);
-    }
+
     // 사용자가 해당 게시글에 좋아요를 눌렀는지 확인하는 메서드
     public boolean isLiked(Long boardSeq, Long userSeq) {
         return boardLikeRepository.existsByBoardSeqAndUserSeq(boardSeq, userSeq);
     }
 
-    //게시글별 좋아요 갯수 가져오기
+    // 게시글별 좋아요 갯수 가져오기
     public int getLikeCount(Long boardSeq) {
         return boardLikeRepository.countByBoardSeq(boardSeq);
     }
 
-
+    // 조회수
     public void updateViewCnt(Long boardSeq) {
         boardRepository.updateViewCntByBoardSeq(boardSeq);
     }
+
+
+
+    // 댓글 작성
+    @Transactional
+    public void registerBoardComment(BoardCommentRequestDto commentDto) {
+        BoardCommentEntity commentEntity = commentDto.toEntity();
+        boardCommentRepository.save(commentEntity);
+        updateCommentCount(commentDto.getBoardSeq());
+    }
+
+    // 게시글 별 댓글 가져오기
+    public List<BoardCommentEntity> getCommentsByBoardSeq(Long boardSeq) {
+        return boardCommentRepository.findByBoardSeq(boardSeq);
+    }
+
+    public List<BoardCommentResponseDto> getCommentsByBoardSeqWithUserId(Long boardSeq) {
+        // boardSeq로 댓글 리스트로 가져오기
+        // boardSeq로 대댓글 리스트로 가져오(user id가 필요한 경우 여기서 추가해서 붙이기)
+        // 대댓글 리스트의 숫자만큼 반복돌면서 댓글 리스트에 리스트를 붙이기
+        List<BoardCommentResponseDto> boardCommentsWithUserId = boardCommentRepository.findBoardCommentsWithUserId(boardSeq);
+        List<BoardReplyResponseDto> byCommentSeq = boardReplyRepository.findBoardReplyWithUserId(boardSeq);
+
+        for (BoardReplyResponseDto entity : byCommentSeq) {
+            Long commentSeq = entity.getCommentSeq();
+            for (BoardCommentResponseDto dto : boardCommentsWithUserId) {
+                if (Objects.equals(dto.getCommentSeq(), commentSeq)) {
+                    log.info("111111111111111111111111111111");
+                    dto.getBoardReplyResponseDtoList().add(entity);
+                    break;
+                }
+            }
+        }
+
+        log.info(boardCommentsWithUserId.toString());
+
+        return boardCommentsWithUserId;
+    }
+
+
+    // 게시글 별 댓글 수 가져오기 (추후엔 대댓글과도 합쳐서 count해야 함)
+    public void updateCommentCount(Long boardSeq) {
+        List<BoardCommentEntity> commentEntityList = boardCommentRepository.findByBoardSeq(boardSeq);
+        int commentCount = commentEntityList.size();
+
+//        int commentCount = boardCommentRepository.countByBoardSeq(boardSeq);
+        BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
+
+        if (boardEntity != null) {
+            boardEntity.setCommentCnt(commentCount);
+            boardRepository.save(boardEntity);
+        }
+    }
+
+    public boolean checkCommentAuth(Long commentSeq, HttpServletRequest httpServletRequest){
+        HttpSession session = httpServletRequest.getSession(false);
+        Long loginUserSeq = (Long) session.getAttribute("userSeq");
+        boolean isAdmin = (boolean) session.getAttribute("admin");
+        log.info("댓글 권한 user seq : {}", boardCommentRepository.findUserSeqByCommentSeq(commentSeq));
+        if(boardCommentRepository.findUserSeqByCommentSeq(commentSeq).equals(loginUserSeq) || isAdmin){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public String getCommentContent(Long commentSeq){
+        return boardCommentRepository.findCommentContentByCommentSeq(commentSeq);
+    }
+
+    @Transactional
+    public void updateComment(Long commentSeq, String commentContent){
+        BoardCommentEntity boardCommentEntity = boardCommentRepository.findByCommentSeq(commentSeq);
+        boardCommentEntity.setCommentContent(commentContent);
+        boardCommentRepository.save(boardCommentEntity);
+    }
+
+    @Transactional
+    public void deleteComment(Long commentSeq){
+        boardCommentRepository.deleteCommentByCommentSeq(commentSeq);
+    }
+
+
+    // 대댓글 작성
+    @Transactional
+    public void registerBoardReply(BoardReplyRequestDto replyDto) {
+        BoardReplyEntity replyEntity = replyDto.toEntity();
+        boardReplyRepository.save(replyEntity);
+
+    }
+
+
+
+
+
+
+
+
+
 
 
 }

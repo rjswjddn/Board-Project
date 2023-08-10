@@ -4,9 +4,6 @@
 <head th:replace="/fragment/header.html :: fragment-header">
   <title>Board - SB Admin</title>
 
-
-<!--  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-o0D7S1b/EX5F7ICwNtPI4fp2owlal0llwFG+YI7BvEc=" crossorigin="anonymous"></script>-->
-
 </head>
 
 <body class="sb-nav-fixed">
@@ -25,10 +22,16 @@
         <div class="card mb-4">
           <div class="card-body">
             <form enctype="multipart/form-data">
+              <div class="row">
+                <div class="mb-3 col-md-6">
+                  <label for="boardCreatedDate" class="form-label">작성일</label>
+                  <div id="boardCreatedDate" class="form-control" th:text="${#temporals.format(boardResponseDto.boardCreatedDate, 'yyyy-MM-dd HH:mm' )}"></div>
+                </div>
 
-              <div class="mb-3">
-                <label for="boardCreatedDate" class="form-label">작성일</label>
-                <div id="boardCreatedDate" class="form-control" th:text="${#temporals.format(boardResponseDto.boardCreatedDate, 'yyyy-MM-dd HH:mm' )}"></div>
+                <div th:if="boardResponseDto.boardUpdatedDate" class="mb-3 col-md-6">
+                  <label for="boardUpdatedDate" class="form-label">수정일</label>
+                  <div id="boardUpdatedDate" class="form-control" th:text="${#temporals.format(boardResponseDto.boardUpdatedDate, 'yyyy-MM-dd HH:mm' )}"></div>
+                </div>
               </div>
 
               <div class="mb-3">
@@ -53,7 +56,7 @@
 
               <div th:if="${imagePath}" class="mb-3">
                 <label for="image" class="form-label"></label>
-                <img th:src="@{/files/{imagePath}(imagePath=${imagePath})}" id="image">
+                <img th:src="@{/image/{imagePath}(imagePath=${imagePath})}" id="image">
               </div>
             </form>
             <div>
@@ -69,66 +72,118 @@
                 <button id="dislikeButton" class="btn btn-secondary" type="button" th:style="'display: ' + (${liked} ? 'inline-block' : 'none')"><i class="fa fa-thumbs-down"></i>좋아요 취소</button>
               </form>
               <span id="likeStatus" th:text="'좋아요 누른 사람 ' + ${likeCount} + '명'"></span>
+              &middot;
+              <span th:text="${'조회수 : ' + boardResponseDto.viewCnt}"></span>
             </div>
           </div>
         </div>
+
+        <!-- 댓글 목록 -->
+        <div class="card card-primary card-outline">
+          <div class="card-body repliesDiv" id="commentsContainer">
+            <h4><span th:text="${boardResponseDto.commentCnt} + ' Comments'"></span></h4>
+            <div th:each="comments : ${boardComments}">
+              <hr> <!-- 분리선 추가 -->
+              <span th:id = "'comment-'+${comments.commentSeq}">
+<!--                댓글-->
+                <div id="commentContainer" >
+                  <div class="row">
+                    <p class="col-md-9" th:text="${comments.userId} + ' ' + ${#temporals.format(comments.commentCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                    <p th:if="${comments.commentUpdatedDate}" class="col-md-3" th:text="' 수정 : ' + ${#temporals.format(comments.commentUpdatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                  </div>
+                  <p th:id="'comment-content-'+${comments.commentSeq}" th:text="${comments.commentContent}"></p>
+                </div>
+
+<!--                대댓글-->
+                <div id="replyContainer">
+                  <div th:if="${comments.boardReplyResponseDtoList}">
+                    <div th:each="reply : ${comments.boardReplyResponseDtoList}">
+                      <div style="margin-left: 40px;"> <!-- 들여쓰기 -->
+                      <p th:text="${reply.userId} + ' ' + ${#temporals.format(reply.replyCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
+                      <p th:text="${reply.replyContent}"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              <form class="form-horizontal" th:id="'updateForm'+${comments.commentSeq}" style="display: none">
+                <div class="form-group">
+                    <textarea class="form-control" rows="3" th:id="'comment-update-'+${comments.commentSeq}"
+                              th:text="${comments.commentContent}"></textarea>
+                </div>
+                <button class="btn btn-sm btn-light" type="button" th:onclick="updateCheck([[${comments.commentSeq}]])">확인</button>
+                <button class="btn btn-sm btn-light" type="button"
+                        th:onclick="updateCancel([[${comments.commentSeq}]])">취소</button>
+              </form>
+                <button class="btn btn-sm btn-primary"
+                        th:attr="data-commentseq=${comments.commentSeq}"
+                        onclick="toggleReplyForm(this.getAttribute('data-commentseq'))">답글 달기</button>
+                <button th:if="${comments.userSeq == session.userSeq || session.admin}" type="button" class="btn btn-sm btn-primary"
+                        th:onclick="updateComment([[${comments.commentSeq}]])">수정</button>
+                <button th:if="${comments.userSeq == session.userSeq || session.admin}" class="btn btn-sm btn-primary"
+                      th:onclick="deleteComment([[${comments.commentSeq}]])">삭제</button>
+
+                <!-- 답글 작성란 -->
+                <div class="reply_create" style="display: none;" th:id="'reply_create_' + ${comments.commentSeq}">
+                  <p class="form_wrap">
+                    <span class="textarea_edit">
+                      <div class="card mb-4">
+                        <div class="card-body">
+                          <form id="replyForm" class="form-horizontal"
+                                th:action="@{/board/{boardSeq}/{commentSeq}/register_reply(boardSeq=${boardResponseDto.boardSeq}, commentSeq=${comments.commentSeq})}"
+                                method="post" th:data-boardseq="${boardResponseDto.boardSeq}" th:data-commentseq="${comments.commentSeq}">
+                            <div class="row">
+                              <div class="form-group col-sm-10">
+                                <input class="form-control input-sm" type="text" id="reply" name="replyContent"
+                                       placeholder="댓글 입력...">
+                              </div>
+                              <div class="form-group col-sm-2">
+                                <button type="submit" class="btn btn-primary" >답글 작성</button>
+<!--                                <button type="button" class="btn btn-primary" onclick="submitReply()">답글 작성</button>-->
+
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </span>
+                  </p>
+                  <hr> <!-- 댓글 사이에 분리선 추가 -->
+                </div>
+
+
+            </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 댓글 작성란 -->
         <div class="card mb-4">
-          <div class="card-body">
-            <form class="form-horizontal">
+          <div class="card-body" id="commentFormContainer" >
+            <form id="commentForm" class="form-horizontal" th:action="@{/board/{boardSeq}/register_comment(boardSeq=${boardResponseDto.boardSeq})}"
+                  method="post" th:data-boardseq="${boardResponseDto.boardSeq}">
               <div class="row">
+                <input type="hidden" name="parentCommentSeq" id="parentCommentSeq" value="">
                 <div class="form-group col-sm-10">
-                  <input class="form-control input-sm" type="text" id="comment" placeholder="댓글 입력...">
+                  <input class="form-control input-sm" type="text" id="comment" name="commentContent" placeholder="댓글 입력...">
                 </div>
                 <div class="form-group col-sm-2">
-                  <button type="button" class="btn btn-primary btn-sm btn-block replyAddBtn col-sm-5">
-                    저장
-                  </button>
+                  <button type="button" class="btn btn-primary" onclick="submitComment()" >댓글 작성</button>
                 </div>
               </div>
             </form>
           </div>
         </div>
-        <div class="card card-primary card-outline">
 
-          <div class="card-body repliesDiv">
-
-          </div>
-
-          <div class="card-footer">
-            <nav aria-label="Contacts Page Navigation">
-              <ul class="pagination pagination-sm no-margin justify-content-center m-0">
-
-              </ul>
-            </nav>
-          </div>
-        </div>
       </div>
     </main>
-
-    <!-- Comments Form -->
-    <div class="container-fluid px-4">
-      <div class="card mb-4">
-        <h5 class="card-header">Leave a Comment:</h5>
-        <div class="card-body">
-
-          <form>
-            <div class="form-group">
-              <input type="hidden" name="idx"/>
-              <textarea name="commentContent" class="form-control" rows="3"></textarea>
-            </div>
-            <br> <!-- 공백을 위해 <br> 요소를 추가 -->
-            <button type="submit" class="btn btn-primary">Send</button>
-          </form>
-
-        </div>
-      </div>
-    </div>
-
     <div th:replace="/fragment/footer.html :: fragment-footer"></div>
   </div>
 </div>
 
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script>
   $(document).ready(function () {
 
@@ -195,6 +250,149 @@
               });
     });
   });
+
+  // 댓글 작성
+  function submitComment() {
+    var formData = $('#commentForm').serialize();
+    var boardSeq = $('#commentForm').data('boardseq');
+    console.log('boardSeq:', boardSeq);
+    $.ajax({
+      type: 'POST',
+      url: $('#commentForm').attr('action'),
+      data: formData,
+      success: function(response) {
+        console.log("댓글 작성 성공:", response);
+        $('#comment').val('');
+        reloadCommentsContainer();
+
+        // loadComments(boardSeq);
+      },
+      error: function(error) {
+        console.error("댓글 작성 실패:", error);
+      }
+    });
+  }
+
+  // 댓글 목록만 리로딩
+  function reloadCommentsContainer() {
+    $('#commentsContainer').load(location.href+' #commentsContainer');
+  }
+
+  function loadComments(boardSeq) {
+    $.ajax({
+      type: 'GET',
+      url: '/board/' + boardSeq + '/comments',
+      dataType: 'json',
+      success: function(response) {
+        $('#commentsContainer').empty();
+
+        $.each(response, function(index, comment) {
+          console.log("댓글:", response);
+          var userIdAndDate = comment.userId + ' ' + moment(comment.commentCreatedDate).format('YYYY-MM-DD HH:mm');
+          var commentContentId = 'comment-content-' + comment.commentSeq;
+
+          var p1 = $('<p>').text(userIdAndDate);
+          var p2 = $('<p>').attr('id', commentContentId).text(comment.commentContent);
+          var div = $('<div>').addClass('commentContainer').append(p1, p2);
+
+          $('#commentsContainer').append(div);
+
+        });
+      },
+      error: function(error) {
+        console.error("댓글 로딩 실패:", error);
+      }
+    });
+  }
+
+  // 답글 창 열기
+  function toggleReplyForm(commentSeq) {
+    console.log('CommentSeq:', commentSeq);
+    var replyForm = document.getElementById(`reply_create_${commentSeq}`);
+    console.log('ReplyForm:', replyForm);
+
+    if (replyForm) {
+      if (replyForm.style.display === 'none') {
+        replyForm.style.display = 'block';
+      } else {
+        replyForm.style.display = 'none';
+      }
+    } else {
+      console.log('ReplyForm is null.');
+    }
+  }
+
+  function submitReply() {
+    var formData = $('#replyForm').serialize();
+    var boardSeq = $('#replyForm').data('boardseq');
+    var commentSeq = $('#replyForm').data('commentseq');
+    console.log('formData:', formData);
+    $.ajax({
+      type: 'POST',
+      url: $('#replyForm').attr('action'),
+      data: formData,
+      success: function(response) {
+        console.log("대댓글 작성 성공:", response);
+        $('#reply').val('');
+        reloadCommentsContainer();
+
+      },
+      error: function(error) {
+        console.error("대댓글 작성 실패:", error);
+      }
+    });
+  }
+
+
+
+  function updateComment(commentSeq){
+    document.getElementById("updateForm"+commentSeq).style.display ='block'
+  };
+
+  function updateCancel(commentSeq){
+    document.getElementById("updateForm"+commentSeq).style.display ='none'
+  };
+  function updateCheck(commentSeq){
+    let commentContents = document.getElementById("comment-update-"+commentSeq).value;
+    console.log(commentContents);
+    if(commentContents.trim() === ""){
+      alert("공백은 입력할 수 없습니다.")
+      return false;
+    }
+    const check = confirm("수정하시겠습니까?");
+    if(check){
+      $.ajax({
+        type: 'PUT',
+        url: "/board/comment/"+commentSeq,
+        dataType: 'JSON',
+        contentType: 'application/json; charset=utf-8',
+        data: commentContents,
+      }).done(function (data){
+        $('#comment-content-' + commentSeq).text(data);
+        document.getElementById("updateForm"+commentSeq).style.display ='none'
+      }).fail(function(){
+        window.location.replace("/error");
+      });
+    };
+  };
+
+  function deleteComment(commentSeq){
+
+    const check = confirm("삭제하시겠습니까?");
+    if(check){
+      $.ajax({
+        type: 'DELETE',
+        url: "/board/comment/"+commentSeq,
+        dataType: 'JSON',
+        contentType: 'application/json; charset=utf-8',
+      }).done(function (){
+        $('#comment-' + commentSeq).remove();
+      }).fail(function(error){
+        alert(JSON.stringify(error));
+      });
+    };
+  };
+
 </script>
 
 <!--        추가해야 드롭다운 가능-->
