@@ -2,17 +2,14 @@ package com.example.boardproject.controller;
 
 import com.example.boardproject.dto.LoginDto;
 import com.example.boardproject.dto.RegisterDto;
-import com.example.boardproject.dto.UserDto;
 import com.example.boardproject.service.UserService;
 import com.example.boardproject.validator.LoginUserIdValidator;
 import com.example.boardproject.validator.RegisterUserIdValidator;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,9 +43,7 @@ public class UserController {
 
     // 회원가입 페이지
     @GetMapping("/register")
-    public ModelAndView registerPage(HttpServletRequest httpServletRequest) {
-
-        ModelAndView mv = new ModelAndView();
+    public ModelAndView registerPage(HttpServletRequest httpServletRequest, ModelAndView mv) {
 
         if (httpServletRequest.getSession(false) != null) {
             mv.setViewName("redirect:/board");
@@ -61,9 +56,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ModelAndView register(Model model, @Valid @ModelAttribute("registerDto") RegisterDto registerDto, Errors errors) {
-
-        ModelAndView mv = new ModelAndView();
+    public ModelAndView register( ModelAndView mv, @Valid @ModelAttribute("registerDto") RegisterDto registerDto,Errors errors) {
 
         // 유효성 검사
         if (errors.hasErrors()) {
@@ -84,9 +77,7 @@ public class UserController {
     // 로그인
     // 로그인 상태면 index 로 이동
     @GetMapping("/login")
-    public ModelAndView loginPage(HttpServletRequest httpServletRequest) {
-
-        ModelAndView mv = new ModelAndView();
+    public ModelAndView loginPage(HttpServletRequest httpServletRequest, ModelAndView mv) {
 
         if (httpServletRequest.getSession(false) != null) {
             mv.setViewName("redirect:/board");
@@ -103,9 +94,7 @@ public class UserController {
     // 로그인에 실패하면 실패 사유를 alert 창으로 나타냄
     // 성공하면 index 로 이동함
     @PostMapping("/login")
-    public ModelAndView login( @Valid @ModelAttribute("loginDto") LoginDto loginDto, Errors errors, HttpServletRequest httpServletRequest) {
-
-        ModelAndView mv = new ModelAndView();
+    public ModelAndView login( @Valid @ModelAttribute("loginDto") LoginDto loginDto, ModelAndView mv, Errors errors, HttpServletRequest httpServletRequest) {
 
         log.info("로그인 컨트롤러");
         // 로그인 유효성 검사
@@ -116,19 +105,7 @@ public class UserController {
             mv.addObject("url", "/login");
             return mv;
         } else {
-            UserDto userDto = userService.getUser(loginDto.getUserId());
-
-            // Session 생성
-            HttpSession session = httpServletRequest.getSession(true);
-
-            //세션 유지시간 설정
-            session.setMaxInactiveInterval(3600);
-
-            // 세션에 userId를 넣어줌
-            session.setAttribute("userId", userDto.getUserId());
-            session.setAttribute("userSeq", userDto.getUserSeq());
-            session.setAttribute("admin", userDto.isUserAdmin());
-
+            userService.login(loginDto, httpServletRequest);
             mv.setViewName("redirect:/board");
         }
 
@@ -140,10 +117,8 @@ public class UserController {
     // 로그아웃
     // session 을 제거하고 login 으로 이동
     @GetMapping("/logout")
-    public ModelAndView logout(HttpServletRequest httpServletRequest) {
-        ModelAndView mv = new ModelAndView();
-        HttpSession session = httpServletRequest.getSession(false);
-        session.invalidate();
+    public ModelAndView logout(ModelAndView mv, HttpServletRequest httpServletRequest) {
+        userService.logout(httpServletRequest);
         mv.setViewName("alert");
         mv.addObject("message", "로그아웃 되었습니다.");
         mv.addObject("url", "/login");

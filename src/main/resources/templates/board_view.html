@@ -354,7 +354,6 @@
   };
   function updateCheck(commentSeq){
     let commentContents = document.getElementById("comment-update-"+commentSeq).value;
-    console.log(commentContents);
     if(commentContents.trim() === ""){
       alert("공백은 입력할 수 없습니다.")
       return false;
@@ -364,12 +363,10 @@
       $.ajax({
         type: 'PUT',
         url: "/board/comment/"+commentSeq,
-        dataType: 'JSON',
         contentType: 'application/json; charset=utf-8',
         data: commentContents,
-      }).done(function (data){
-        $('#comment-content-' + commentSeq).text(data);
-        document.getElementById("updateForm"+commentSeq).style.display ='none'
+      }).done(function (){
+        reloadCommentsContainer();
       }).fail(function(){
         window.location.replace("/error");
       });
@@ -386,7 +383,8 @@
         dataType: 'JSON',
         contentType: 'application/json; charset=utf-8',
       }).done(function (){
-        $('#comment-' + commentSeq).remove();
+        // $('#comment-' + commentSeq).remove();
+        reloadCommentsContainer();
       }).fail(function(error){
         alert(JSON.stringify(error));
       });

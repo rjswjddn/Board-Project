@@ -60,5 +60,7 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Long> {
     @Query(value ="UPDATE board SET view_cnt = view_cnt + 1 WHERE board_seq = :boardSeq", nativeQuery = true)
     void updateViewCntByBoardSeq(@Param("boardSeq") Long boardSeq);
 
+    @Query(value = "UPDATE board SET comment_cnt = comment_cnt - 1 WHERE board_seq = :boardSeq", nativeQuery = true)
+    void decreaseCommentCnt(@Param("boardSeq") Long boardSeq);
 }
 
