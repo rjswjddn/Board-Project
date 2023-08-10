@@ -10,7 +10,7 @@ public interface BoardLikeRepository extends JpaRepository<BoardLikeEntity, Long
     void deleteByBoardSeqAndUserSeq(Long boardSeq, Long userSeq);
     int countByBoardSeq(Long boardSeq);
     @Query(value = "DELETE FROM board_like WHERE board_seq = :boardSeq", nativeQuery = true)
-    void deleteAllByBoardSeq(@Param("boardSeq") Long boardSeq);
+    void deleteByBoardSeq(@Param("boardSeq") Long boardSeq);
 
 
 

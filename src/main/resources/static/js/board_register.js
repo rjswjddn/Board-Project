@@ -65,16 +65,16 @@ function updateTitleCharacterCount() {
     titleCharacterCount.innerHTML = characterLength + " / 45자";
 }
 
-function updateCharacterCount() {
+function updateContentCharacterCount() {
     var textarea = document.getElementById('content');
-    var characterCount = document.getElementById('characterCount');
+    var contentCharacterCount = document.getElementById('contentCharacterCount');
 
     // 입력된 내용의 글자 수를 계산
     var text = textarea.value;
     var characterLength = text.length;
 
     // 글자 수를 화면에 업데이트
-    characterCount.innerHTML = characterLength + " / 2000자";
+    contentCharacterCount.innerHTML = characterLength + " / 2000자";
 }
 
 // document.getElementById('title').addEventListener('input', updateSubmitButtonState);
@@ -105,12 +105,12 @@ function removeImage() {
 }
 
 // 이미지 첨부 에러메시지
-/*<![CDATA[*/
-var errorMessage = /*[[${errorMessage}]]*/ null;
-if (errorMessage) {
-    alert(errorMessage);
-}
-/*]]>*/
+
+// var errorMessage = /*[[${errorMessage}]]*/ null;
+// if (errorMessage) {
+//     alert(errorMessage);
+// }
+
 
 // 엔터 키를 눌렀을 때 폼 제출 방지
 function preventFormSubmit(event) {

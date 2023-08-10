@@ -18,4 +18,11 @@ public interface BoardReplyRepository extends JpaRepository<BoardReplyEntity, Lo
             "WHERE b.replyStatus = false AND b.boardSeq = :boardSeq " +
             "ORDER BY b.boardSeq DESC ")
     List<BoardReplyResponseDto> findBoardReplyWithUserId(@Param("boardSeq") Long boardSeq);
+
+    @Query(value="SELECT * FROM board_reply WHERE reply_status = false and board_seq = :boardSeq" , nativeQuery = true)
+    List<BoardReplyEntity> findByBoardSeq(Long boardSeq);
+
+    @Query(value = "UPDATE board_reply SET reply_status = true WHERE board_seq = :boardSeq", nativeQuery = true)
+    void deleteByBoardSeq(Long boardSeq);
+
 }

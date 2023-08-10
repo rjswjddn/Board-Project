@@ -95,7 +95,6 @@ public class BoardService {
         String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
         boolean isAllowedExtension = Arrays.stream(Constants.ALLOWED_EXTENSIONS).anyMatch(extension -> extension.equals(fileExtension));
         if (!isAllowedExtension) {
-
             throw new IOException("이미지 파일만 업로드 가능합니다.");
         }
 
@@ -141,7 +140,7 @@ public class BoardService {
         return StringUtils.hasText(boardContent) && boardContent.length() <= ValidationConstants.MAX_BOARD_CONTENT_LENGTH;
     }
 
-    // 유효성 검사
+    // 게시물 유효성 검사
     public void validateBoardRequest(BoardRequestDto boardRequestDto, BindingResult bindingResult) throws IOException {
         if (!isValidBoardTitle(boardRequestDto.getBoardTitle())) {
             bindingResult.rejectValue("boardTitle", "empty.boardTitle", ValidationConstants.BOARD_TITLE_ERROR_MESSAGE);
@@ -161,14 +160,16 @@ public class BoardService {
 
     }
 
-
-
     // Seq로 게시물을 찾아 board_status를 0으로 변경
     @Transactional
     public void deleteBoard(Long boardSeq) {
         boardRepository.deleteByBoardSeq(boardSeq);
-        boardLikeRepository.deleteAllByBoardSeq(boardSeq);
+        boardLikeRepository.deleteByBoardSeq(boardSeq);
         boardImageRepository.deleteByBoardSeq(boardSeq);
+
+        // 게시글 삭제시 댓글, 대댓글 삭제 처리
+        boardCommentRepository.deleteByBoardSeq(boardSeq);
+        boardReplyRepository.deleteByBoardSeq(boardSeq);
     }
 
     // 게시물 찾아 수정하고 저장
@@ -192,7 +193,6 @@ public class BoardService {
                 saveImage(file, boardEntity);
             }
         }
-
 
         boardRepository.save(boardEntity);
     }
@@ -255,32 +255,27 @@ public class BoardService {
         updateCommentCount(commentDto.getBoardSeq());
     }
 
-    // 게시글 별 댓글 가져오기
-    public List<BoardCommentEntity> getCommentsByBoardSeq(Long boardSeq) {
-        return boardCommentRepository.findByBoardSeq(boardSeq);
-    }
-
+    // 게시글별 댓글 가져오기
     public List<BoardCommentResponseDto> getCommentsByBoardSeqWithUserId(Long boardSeq) {
         // boardSeq로 댓글 리스트로 가져오기
-        // boardSeq로 대댓글 리스트로 가져오(user id가 필요한 경우 여기서 추가해서 붙이기)
+        // boardSeq로 대댓글 리스트로 가져오기 (user id가 필요한 경우 여기서 추가해서 붙이기)
         // 대댓글 리스트의 숫자만큼 반복돌면서 댓글 리스트에 리스트를 붙이기
-        List<BoardCommentResponseDto> boardCommentsWithUserId = boardCommentRepository.findBoardCommentsWithUserId(boardSeq);
-        List<BoardReplyResponseDto> byCommentSeq = boardReplyRepository.findBoardReplyWithUserId(boardSeq);
+        List<BoardCommentResponseDto> boardCommentResponseDtoList = boardCommentRepository.findBoardCommentsWithUserId(boardSeq);
+        List<BoardReplyResponseDto> boardReplyResponseDtoList = boardReplyRepository.findBoardReplyWithUserId(boardSeq);
 
-        for (BoardReplyResponseDto entity : byCommentSeq) {
-            Long commentSeq = entity.getCommentSeq();
-            for (BoardCommentResponseDto dto : boardCommentsWithUserId) {
-                if (Objects.equals(dto.getCommentSeq(), commentSeq)) {
-                    log.info("111111111111111111111111111111");
-                    dto.getBoardReplyResponseDtoList().add(entity);
+        for (BoardReplyResponseDto boardReplyResponseDto : boardReplyResponseDtoList) {
+            Long commentSeq = boardReplyResponseDto.getCommentSeq();
+            for (BoardCommentResponseDto boardCommentResponseDto : boardCommentResponseDtoList) {
+                if (Objects.equals(boardCommentResponseDto.getCommentSeq(), commentSeq)) {
+                    boardCommentResponseDto.getBoardReplyResponseDtoList().add(boardReplyResponseDto);
                     break;
                 }
             }
         }
 
-        log.info(boardCommentsWithUserId.toString());
+        log.info(boardCommentResponseDtoList.toString());
 
-        return boardCommentsWithUserId;
+        return boardCommentResponseDtoList;
     }
 
 
@@ -289,11 +284,17 @@ public class BoardService {
         List<BoardCommentEntity> commentEntityList = boardCommentRepository.findByBoardSeq(boardSeq);
         int commentCount = commentEntityList.size();
 
-//        int commentCount = boardCommentRepository.countByBoardSeq(boardSeq);
+        List<BoardReplyEntity> replyEntityList = boardReplyRepository.findByBoardSeq(boardSeq);
+        int replyCount = replyEntityList.size();
+        log.info(String.valueOf(replyCount));
+
+        int totalCommentCount = commentCount + replyCount;
+        log.info(String.valueOf(totalCommentCount));
+
         BoardEntity boardEntity = boardRepository.findByBoardSeq(boardSeq);
 
         if (boardEntity != null) {
-            boardEntity.setCommentCnt(commentCount);
+            boardEntity.setCommentCnt(totalCommentCount);
             boardRepository.save(boardEntity);
         }
     }
@@ -324,17 +325,40 @@ public class BoardService {
     @Transactional
     public void deleteComment(Long commentSeq){
         boardCommentRepository.deleteCommentByCommentSeq(commentSeq);
-    }
 
+//        List<BoardReplyEntity> replyEntities = boardReplyRepository.findByCommentSeq(commentSeq);
+//        for (BoardReplyEntity replyEntity : replyEntities) {
+//            replyEntity.setReplyStatus(true);
+//            boardReplyRepository.save(replyEntity);
+//        }
+    }
 
     // 대댓글 작성
     @Transactional
     public void registerBoardReply(BoardReplyRequestDto replyDto) {
         BoardReplyEntity replyEntity = replyDto.toEntity();
         boardReplyRepository.save(replyEntity);
+        updateCommentCount(replyDto.getBoardSeq());
 
     }
 
+    public boolean isValidCommentReplyContent(String commentContent) {
+        return StringUtils.hasText(commentContent) && commentContent.length() <= ValidationConstants.MAX_COMMENT_REPLY_CONTENT_LENGTH;
+    }
+
+    // 댓글 유효성 검사
+    public void validateCommentRequest(BoardCommentRequestDto commentRequestDto) throws IOException {
+        if (!isValidCommentReplyContent(commentRequestDto.getCommentContent())) {
+            throw new IOException(ValidationConstants.COMMENT_CONTENT_REPLY_ERROR_MESSAGE);
+        }
+    }
+
+    // 답글 유효성 검사
+    public void validateReplyRequest(BoardReplyRequestDto replyRequestDto) throws IOException {
+        if (!isValidCommentReplyContent(replyRequestDto.getReplyContent())) {
+            throw new IOException(ValidationConstants.COMMENT_CONTENT_REPLY_ERROR_MESSAGE);
+        }
+    }
 
 
 

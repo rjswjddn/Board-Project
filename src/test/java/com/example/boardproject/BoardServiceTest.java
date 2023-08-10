@@ -29,6 +29,9 @@ public class BoardServiceTest {
     @Mock
     private BoardCommentRepository boardCommentRepository;
 
+    @Mock
+    private BoardReplyRepository boardReplyRepository;
+
     @InjectMocks
     private BoardService boardService;
 
@@ -41,7 +44,7 @@ public class BoardServiceTest {
     public void testToggleLikeForNonExistingBoard() {
             Long nonExistingBoardSeq = Long.MAX_VALUE; // 존재하지 않는 게시물의 boardSeq
             Long userSeq = 12345L; // 존재하는 사용자의 userSeq
-            //BoardService boardService = new BoardService(boardRepository, userRepository, boardImageRepository, boardLikeRepository, boardCommentRepository); // 목 객체를 주입한 서비스 객체 생성
+            BoardService boardService = new BoardService(boardRepository, userRepository, boardImageRepository, boardLikeRepository, boardCommentRepository, boardReplyRepository); // 목 객체를 주입한 서비스 객체 생성
 
             IOException exception = assertThrows(IOException.class, () -> {
                 boardService.toggleLike(nonExistingBoardSeq, userSeq);

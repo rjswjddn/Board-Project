@@ -104,7 +104,7 @@ public class UserController {
     // 성공하면 index 로 이동함
     @PostMapping("/login")
     public ModelAndView login( @Valid @ModelAttribute("loginDto") LoginDto loginDto, Errors errors, HttpServletRequest httpServletRequest) {
-
+        log.info(loginDto.toString());
         ModelAndView mv = new ModelAndView();
 
         log.info("로그인 컨트롤러");
