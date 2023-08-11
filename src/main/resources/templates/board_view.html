@@ -109,9 +109,10 @@
                         th:onclick="updateCancel([[${comments.commentSeq}]])">취소</button>
               </form>
 
-                <button class="btn btn-sm btn-primary"
+                <button class="btn btn-sm btn-primary btn-reply"
                         th:attr="data-commentseq=${comments.commentSeq}"
                         onclick="toggleReplyForm(this.getAttribute('data-commentseq'))">답글 달기</button>
+
                 <button th:if="${comments.userSeq == session.userSeq || session.admin}" type="button"
                         class="btn btn-sm btn-primary"
                         th:onclick="updateComment([[${comments.commentSeq}]])">수정</button>
@@ -127,21 +128,29 @@
                 </div>
               </div>
 
-              <!--                  대댓글 표시-->
-              <div id="replyContainer">
-                <div th:if="${comments.boardReplyResponseDtoList}">
-                  <div th:each="reply : ${comments.boardReplyResponseDtoList}">
-                    <div style="margin-left: 40px;"> <!-- 들여쓰기 -->
+                <!-- 공백 추가 -->
+                <div style="margin-top: 10px;"></div>
+
+                <!--                  대댓글 표시-->
+                <div id="replyContainer">
+                  <div th:if="${comments.boardReplyResponseDtoList}">
+                    <div th:each="reply : ${comments.boardReplyResponseDtoList}">
+                      <div style="margin-left: 40px;"> <!-- 들여쓰기 -->
                       <p th:text="${'작성자 : ' + reply.userId} + '   ' + ${'작성일 : ' + #temporals.format(reply.replyCreatedDate, 'yyyy-MM-dd HH:mm')}"></p>
                       <p th:text="${reply.replyContent}"></p>
+
+                          <button th:if="${comments.userSeq == session.userSeq || session.admin}" class="btn btn-sm btn-primary"
+                                  th:attr="data-boardseq=${boardResponseDto.boardSeq}, data-commentseq=${reply.commentSeq}, data-replyseq=${reply.replySeq}"
+                                  onclick="deleteReply(this.getAttribute('data-boardseq'), this.getAttribute('data-commentseq'), this.getAttribute('data-replyseq'))">삭제</button>
+
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!--                답글 작성란 -->
-              <div class="reply_create" style="display: none;" th:id="'reply_create_' + ${comments.commentSeq}">
-                <p class="form_wrap">
+<!--                답글 작성란 -->
+                <div class="reply_create" style="display: none;" th:id="'reply_create_' + ${comments.commentSeq}">
+                  <p class="form_wrap">
                     <span class="textarea_edit">
                       <div class="card mb-4">
                         <div class="card-footer">
@@ -157,7 +166,7 @@
                               <div class="form-group col-sm-2">
                                  <button type="button" class="btn btn-primary"
                                          th:attr="data-commentseq=${comments.commentSeq}"
-                                         onclick="submitReply(this.getAttribute('data-commentseq'))">답글 작성</button>
+                                         onclick="submitReply(this.getAttribute('data-commentseq'))" >답글 작성</button>
 
                               </div>
                             </div>
@@ -173,6 +182,10 @@
         </div>
 
         <!--        댓글 작성란 -->
+        <!-- 공백 추가 -->
+        <div style="margin-top: 10px;"></div>
+
+<!--        댓글 작성란 -->
         <div class="card mb-4">
           <div class="card-footer" id="commentFormContainer">
             <form id="commentForm" class="form-horizontal"
@@ -206,7 +219,7 @@
   $(document).ready(function () {
 
     // 좋아요 버튼 클릭 이벤트 핸들러
-    $("#likeButton").click(function () {
+    $("#likeButton").off('click').on('click', function () {
       $.post($("#likeForm").attr("action"))
               .done(function (data) {
                 console.log("AJAX 요청 성공!");
@@ -239,7 +252,7 @@
     });
 
     // 좋아요 취소 버튼 클릭 이벤트 핸들러
-    $("#dislikeButton").click(function () {
+    $("#dislikeButton").off('click').on('click', function () {
       $.post($("#likeForm").attr("action"))
               .done(function (data) {
                 console.log("AJAX 요청 성공!");
@@ -296,6 +309,12 @@
     });
   }
 
+  // 댓글 작성 버튼 클릭 이벤트 핸들러
+  $('#commentSubmitButton').off('click').on('click', function() {
+    submitComment();
+  });
+
+
   // 댓글 목록만 리로드
   function reloadCommentsContainer() {
     $('#commentsContainer').load(location.href+' #commentsContainer');
@@ -330,8 +349,7 @@
 
   // 답글 창 열기
   function toggleReplyForm(commentSeq) {
-    console.log('select CommentSeq:', commentSeq);
-
+    console.log('선택한 CommentSeq:', commentSeq);
     var replyForm = document.getElementById(`reply_create_${commentSeq}`);
 
     if (replyForm) {
@@ -370,7 +388,6 @@
 
 
   }
-
 
   function updateComment(commentSeq){
     document.getElementById("updateForm"+commentSeq).style.display ='block'
@@ -417,6 +434,23 @@
     };
   };
 
+  function deleteReply(boardSeq, commentSeq, replySeq) {
+    const check = confirm("삭제하시겠습니까?");
+    if (check) {
+      const url = `/board/${boardSeq}/${commentSeq}/delete_reply/${replySeq}`;
+      $.ajax({
+        type: 'DELETE',
+        url: url,
+        dataType: 'JSON',
+        contentType: 'application/json; charset=utf-8',
+      }).done(function () {
+        reloadCommentsContainer();
+      }).fail(function (error) {
+        alert(JSON.stringify(error));
+      });
+    };
+  }
+
   // 엔터키로 form submit 막기
   function preventFormSubmit(event) {
       if (event.keyCode === 13) {
@@ -447,6 +481,7 @@
   }
 
   $('#commentContent').on('input', function() {
+    updateCommentContentCharacterCount();
     updateCommentSubmitButtonState();
   });
 
@@ -462,6 +497,12 @@
     // 글자 수를 화면에 업데이트
     replyContentCharacterCount.innerHTML = characterLength + " / 200자";
   }
+
+  // 답글 자수 count 업데이트
+  $('#replyContent').on('input', function() {
+    updateReplyContentCharacterCount();
+  });
+
 
 </script>
 

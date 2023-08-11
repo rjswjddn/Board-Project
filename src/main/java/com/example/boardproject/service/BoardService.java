@@ -253,7 +253,7 @@ public class BoardService {
         updateCommentCount(commentDto.getBoardSeq());
     }
 
-    // 게시글별 댓글 가져오기
+    // 게시글별 댓글 + 답글 가져오기
     public List<BoardCommentResponseDto> getCommentsByBoardSeqWithUserId(Long boardSeq) {
         // boardSeq로 댓글 리스트로 가져오기
         // boardSeq로 대댓글 리스트로 가져오기 (user id가 필요한 경우 여기서 추가해서 붙이기)
@@ -278,7 +278,7 @@ public class BoardService {
     }
 
 
-    // 게시글 별 댓글 수 가져오기 (추후엔 대댓글과도 합쳐서 count해야 함)
+    // 게시글 별 댓글 + 답글 수
     public void updateCommentCount(Long boardSeq) {
         List<BoardCommentEntity> commentEntityList = boardCommentRepository.findByBoardSeq(boardSeq);
         int commentCount = commentEntityList.size();
@@ -302,7 +302,7 @@ public class BoardService {
         HttpSession session = httpServletRequest.getSession(false);
         Long loginUserSeq = (Long) session.getAttribute("userSeq");
         boolean isAdmin = (boolean) session.getAttribute("admin");
-        log.info("댓글 권한 user seq : {}", boardCommentRepository.findUserSeqByCommentSeq(commentSeq));
+        log.info("댓글 수정, 삭제 권한 확인 userSeq : {}", boardCommentRepository.findUserSeqByCommentSeq(commentSeq));
         if(boardCommentRepository.findUserSeqByCommentSeq(commentSeq).equals(loginUserSeq) || isAdmin){
             return true;
         } else {
@@ -362,9 +362,25 @@ public class BoardService {
         }
     }
 
+    // 답글 삭제 권한 확인
+    public boolean checkReplyAuth(Long replySeq, HttpServletRequest httpServletRequest){
+        HttpSession session = httpServletRequest.getSession(false);
+        Long loginUserSeq = (Long) session.getAttribute("userSeq");
+        boolean isAdmin = (boolean) session.getAttribute("admin");
+        log.info("답글 삭제 권한 확인 userSeq : {}", boardReplyRepository.findUserSeqByReplySeq(replySeq));
+        if(boardReplyRepository.findUserSeqByReplySeq(replySeq).equals(loginUserSeq) || isAdmin){
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-
-
+    // 답글 삭제
+    @Transactional
+    public void deleteReply(Long replySeq) {
+        boardRepository.decreaseCommentCnt(boardReplyRepository.findByReplySeq(replySeq).getBoardSeq());
+        boardReplyRepository.deleteReplyByReplySeq(replySeq);
+    }
 
 
 
