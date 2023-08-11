@@ -435,9 +435,7 @@ public class BoardController {
     //대댓글 작성
     @PostMapping("/board/{boardSeq}/{commentSeq}/register_reply")
     @ResponseBody
-    public ResponseEntity<String> registerReply(@Valid @PathVariable("boardSeq") Long boardSeq,
-                                                @PathVariable("commentSeq") Long commentSeq,
-                                                @ModelAttribute BoardReplyRequestDto replyDto,
+    public ResponseEntity<String> registerReply(@ModelAttribute BoardReplyRequestDto replyDto,
                                                 HttpServletRequest httpServletRequest) {
         try {
             HttpSession session = httpServletRequest.getSession(false);

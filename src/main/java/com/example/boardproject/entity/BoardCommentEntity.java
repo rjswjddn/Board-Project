@@ -31,7 +31,6 @@ public class BoardCommentEntity {
     @Column(name="comment_created_date")
     private LocalDateTime commentCreatedDate;
 
-
     @Column(name="comment_updated_date")
     private LocalDateTime commentUpdatedDate;
 

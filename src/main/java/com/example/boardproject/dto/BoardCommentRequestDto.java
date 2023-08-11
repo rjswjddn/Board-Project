@@ -2,7 +2,6 @@ package com.example.boardproject.dto;
 
 import com.example.boardproject.entity.BoardCommentEntity;
 import lombok.*;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Transient;
 
 import java.time.LocalDateTime;
@@ -17,7 +16,6 @@ public class BoardCommentRequestDto {
     private Long commentSeq;
     private String commentContent;
     private LocalDateTime commentCreatedDate;
-    @LastModifiedDate
     private LocalDateTime commentUpdatedDate;
     private boolean commentStatus;
     private Long boardSeq;
