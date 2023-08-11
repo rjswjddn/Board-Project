@@ -74,8 +74,8 @@ public class BoardController {
     //검색 기능
     @GetMapping("/search")
     public ModelAndView search(@RequestParam(name = "searchType", defaultValue = "boardTitle") String searchType,
-                         @RequestParam(name = "keyword") String keyword,
-                         @RequestParam(name = "page", defaultValue = "0") int page,
+                               @RequestParam(name = "keyword") String keyword,
+                               @RequestParam(name = "page", defaultValue = "0") int page,
                                ModelAndView modelAndView) {
         int pageSize = 10;
         Page<BoardResponseDto> searchResult = boardService.searchBoards(searchType, keyword, page, pageSize);
@@ -432,7 +432,7 @@ public class BoardController {
         }
     }
 
-    //대댓글 작성
+    //답글 작성
     @PostMapping("/board/{boardSeq}/{commentSeq}/register_reply")
     @ResponseBody
     public ResponseEntity<String> registerReply(@Valid @PathVariable("boardSeq") Long boardSeq,
@@ -447,11 +447,9 @@ public class BoardController {
                 replyDto.setUserId(userId);
                 replyDto.setUserSeq(userSeq);
             }
-
-            // 유효성 검사
             boardService.validateReplyRequest(replyDto);
 
-            log.info("새로운 대댓글 작성: {}", replyDto.getReplyContent());
+            log.info("새로운 답글 작성: {}, {}", replyDto.getUserId(), replyDto.getReplyContent());
             boardService.registerBoardReply(replyDto);
 
             return ResponseEntity.ok("success");
@@ -462,7 +460,18 @@ public class BoardController {
         }
     }
 
-
+    // 답글 삭제
+    @DeleteMapping("/board/{boardSeq}/{commentSeq}/delete_reply/{replySeq}")
+    @ResponseBody
+    public Long deleteReply(@PathVariable("boardSeq") Long boardSeq,
+                            @PathVariable("commentSeq") Long commentSeq,
+                            @PathVariable("replySeq") Long replySeq,
+                            HttpServletRequest httpServletRequest){
+        if (boardService.checkReplyAuth(replySeq, httpServletRequest)){
+            boardService.deleteReply(replySeq);
+        }
+        return replySeq;
+    }
 
 
 }
