@@ -181,7 +181,6 @@
           </div>
         </div>
 
-        <!--        댓글 작성란 -->
         <!-- 공백 추가 -->
         <div style="margin-top: 10px;"></div>
 
@@ -194,7 +193,7 @@
               <div class="row">
                 <div class="form-group col-sm-10">
                   <textarea class="form-control input-sm" type="text" id="commentContent"
-                            placeholder="댓글 입력..." oninput="updateCommentContentCharacterCount()" onkeydown="preventFormSubmit(event)"> </textarea>
+                            placeholder="댓글 입력..."  onkeydown="preventFormSubmit(event)"> </textarea>
                   <div id="commentContentCharacterCount" class="text-secondary">0 / 200자</div>
                 </div>
                 <div class="form-group col-sm-2">
@@ -299,9 +298,8 @@
       success: function(response) {
         console.log("댓글 작성 성공:", response);
         $('#commentContent').val('');
-        reloadCommentsContainer();
 
-        // loadComments(boardSeq);
+        reloadCommentsContainer();
       },
       error: function(error) {
         console.error("댓글 작성 실패:", error);
@@ -309,42 +307,9 @@
     });
   }
 
-  // 댓글 작성 버튼 클릭 이벤트 핸들러
-  $('#commentSubmitButton').off('click').on('click', function() {
-    submitComment();
-  });
-
-
   // 댓글 목록만 리로드
   function reloadCommentsContainer() {
     $('#commentsContainer').load(location.href+' #commentsContainer');
-  }
-
-  function loadComments(boardSeq) {
-    $.ajax({
-      type: 'GET',
-      url: '/board/' + boardSeq + '/comments',
-      dataType: 'json',
-      success: function(response) {
-        $('#commentsContainer').empty();
-
-        $.each(response, function(index, comment) {
-          console.log("댓글:", response);
-          var userIdAndDate = comment.userId + ' ' + moment(comment.commentCreatedDate).format('YYYY-MM-DD HH:mm');
-          var commentContentId = 'comment-content-' + comment.commentSeq;
-
-          var p1 = $('<p>').text(userIdAndDate);
-          var p2 = $('<p>').attr('id', commentContentId).text(comment.commentContent);
-          var div = $('<div>').addClass('commentContainer').append(p1, p2);
-
-          $('#commentsContainer').append(div);
-
-        });
-      },
-      error: function(error) {
-        console.error("댓글 로딩 실패:", error);
-      }
-    });
   }
 
   // 답글 창 열기
@@ -385,8 +350,6 @@
               console.error("답글 작성 실패:", error);
           }
       });
-
-
   }
 
   function updateComment(commentSeq){
@@ -483,24 +446,6 @@
   $('#commentContent').on('input', function() {
     updateCommentContentCharacterCount();
     updateCommentSubmitButtonState();
-  });
-
-  // 답글 자수 count
-  function updateReplyContentCharacterCount() {
-    var textarea = document.getElementById('replyContent');
-    var replyContentCharacterCount = document.getElementById('replyContentCharacterCount');
-
-    // 입력된 내용의 글자 수를 계산
-    var text = textarea.value;
-    var characterLength = text.length;
-
-    // 글자 수를 화면에 업데이트
-    replyContentCharacterCount.innerHTML = characterLength + " / 200자";
-  }
-
-  // 답글 자수 count 업데이트
-  $('#replyContent').on('input', function() {
-    updateReplyContentCharacterCount();
   });
 
 
