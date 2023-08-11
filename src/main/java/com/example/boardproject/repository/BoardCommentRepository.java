@@ -23,7 +23,7 @@ public interface BoardCommentRepository extends JpaRepository<BoardCommentEntity
 
     @Query("SELECT new com.example.boardproject.dto.BoardCommentResponseDto(b.commentSeq, b.commentContent, b.commentCreatedDate, b.commentUpdatedDate, b.commentStatus, b.boardSeq, b.userSeq, u.userId) " +
             "FROM BoardCommentEntity b INNER JOIN UserEntity u ON b.userSeq = u.userSeq " +
-            "WHERE b.commentStatus = false AND b.boardSeq = :boardSeq " +
+            "WHERE b.boardSeq = :boardSeq " +
             "ORDER BY b.boardSeq DESC ")
     List<BoardCommentResponseDto> findBoardCommentsWithUserId(@Param("boardSeq") Long boardSeq);
 

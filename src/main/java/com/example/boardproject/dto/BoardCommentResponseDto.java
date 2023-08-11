@@ -21,6 +21,7 @@ public class BoardCommentResponseDto {
     private Long userSeq;
     private String userId;
     private List<BoardReplyResponseDto> boardReplyResponseDtoList;
+    private boolean hasReply;
 
     public BoardCommentResponseDto(Long commentSeq, String commentContent, LocalDateTime commentCreatedDate, LocalDateTime commentUpdatedDate,
                                    boolean commentStatus, Long boardSeq, Long userSeq, String userId){

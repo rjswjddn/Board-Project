@@ -56,7 +56,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ModelAndView register( ModelAndView mv, @Valid @ModelAttribute("registerDto") RegisterDto registerDto,Errors errors) {
+    public ModelAndView register( ModelAndView mv, @Valid @ModelAttribute("registerDto") RegisterDto registerDto, Errors errors) {
 
         // 유효성 검사
         if (errors.hasErrors()) {

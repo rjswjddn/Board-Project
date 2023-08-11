@@ -37,7 +37,7 @@
                             </div>
                             <div class="mb-3 mt-3">
                                 <label for="title" class="form-label">제목</label>
-                                <input th:field="*{boardTitle}" type="text" class="form-control" id="title" onblur="validateTitleForm(this)" oninput="updateTitleCharacterCount()" onkeydown="preventFormSubmit(event)">
+                                <input th:field="*{boardTitle}" type="text" class="form-control" id="title" onload="updateTitleCharacterCount()" onblur="validateTitleForm(this)" oninput="updateTitleCharacterCount()" onkeydown="preventFormSubmit(event)">
                                 <div id="titleCharacterCount" class="text-secondary">0 / 45자</div>
                                 <div id="titleError" class="text-danger"></div>
                             </div>
@@ -49,7 +49,7 @@
 
                             <div class="mb-3">
                                 <label for="content" class="form-label">내용</label>
-                                <textarea th:field="*{boardContent}" class="form-control" id="content" onblur="validateContentForm(this)" oninput="updateCharacterCount()" style="height: 300px;"></textarea>
+                                <textarea th:field="*{boardContent}" class="form-control" id="content" onload="updateCharacterCount()" onblur="validateContentForm(this)" oninput="updateCharacterCount()" style="height: 300px;"></textarea>
                                 <div id="characterCount" class="text-secondary">0 / 2000자</div>
                                 <div id="contentError" class="text-danger"></div>
                             </div>
@@ -81,7 +81,8 @@
                             <button id="submitButton" class="btn btn-primary">등록</button>
 
                             <script>
-
+                                window.onload = updateTitleCharacterCount;
+                                window.addEventListener('load', updateCharacterCount);
                                 //유효성 검사
                                 function validateTitleForm() {
                                     var title = document.getElementById('title').value;

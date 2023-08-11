@@ -266,6 +266,7 @@ public class BoardService {
             for (BoardCommentResponseDto boardCommentResponseDto : boardCommentResponseDtoList) {
                 if (Objects.equals(boardCommentResponseDto.getCommentSeq(), commentSeq)) {
                     boardCommentResponseDto.getBoardReplyResponseDtoList().add(boardReplyResponseDto);
+                    boardCommentResponseDto.setHasReply(true);
                     break;
                 }
             }
